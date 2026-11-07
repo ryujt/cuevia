@@ -1,0 +1,38 @@
+Cuevia for Windows
+
+Cuevia runs its web interface on Windows 10 (1809)+ x64.
+Go and Inno Setup are NOT required on the destination computer.
+
+Press Ctrl+Alt+S or use the tray menu's capture action to select a screen area.
+Drag a rectangle to capture it; press Escape to cancel. The captured image opens
+in Cuevia for annotations, text and voice explanations, and prompt generation.
+macOS-style monitor/program selection is not available on Windows.
+Use a current Chrome or Edge browser and allow microphone access for recording.
+Open Settings in the web interface to enter your own OpenAI API key.
+
+Start Cuevia from the Start menu (or the optional desktop shortcut).
+The interface opens at http://127.0.0.1:8742/ in your default browser. If that
+port is occupied, Cuevia tries the next 20 ports, then an available random port.
+The browser and tray use the actual selected address. Starting Cuevia again
+reopens the running instance. No PowerShell console window is displayed.
+The tray menu provides capture, open, settings, guide and exit actions.
+Closing the browser keeps Cuevia running. Finish recording and wait for saved
+changes before exiting. Use the tray's exit action before updating/uninstalling.
+The hidden launcher stops its server if the tray process is forcibly closed.
+
+Installation: %LOCALAPPDATA%\Programs\Cuevia
+Settings:     %APPDATA%\Cuevia\.env
+Records:      %APPDATA%\Cuevia\sessions
+Requests:     %APPDATA%\Cuevia\requests
+Logs:         %LOCALAPPDATA%\Cuevia\stderr.log
+
+Uninstall through Windows Settings > Apps > Cuevia.
+Uninstall preserves API settings, recordings, and records. Cuevia's existing
+seven-day retention policy applies while the app is running.
+No API keys, .env files, or user records are included in the installer.
+This installer is not code-signed.
+
+Windows 단축키: Ctrl+Alt+S. 트레이의 캡처 시작으로도 실행할 수 있습니다.
+마우스로 영역을 드래그하고 Esc로 취소합니다. 트레이의 프로그램 종료로
+앱과 서버를 종료하세요. 사용 중인 포트는 자동으로 피하며 재실행하면
+기존 인스턴스를 엽니다. 제거 시 사용자 자료는 보존됩니다.
