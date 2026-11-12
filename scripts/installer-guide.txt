@@ -1,39 +1,39 @@
-Cuevia 설치 및 첫 실행 안내
+Cuevia installation and first launch
 
-필요한 환경
-• macOS 14.0 이상
+Requirements
+• macOS 14.0 or later
 • Google Chrome
-• 음성 녹음·전사를 사용할 경우 마이크, 인터넷 연결, 본인의 OpenAI API 키
+• A microphone, internet access, and your OpenAI API key for voice recording and transcription
 
-설치
-1. 이 이미지의 Cuevia.app을 Applications 폴더로 드래그합니다.
-2. 복사가 끝나면 디스크 이미지를 추출합니다.
-3. 응용 프로그램 폴더에서 Cuevia를 실행합니다. 실행 후 메뉴 막대에 대기합니다.
-4. ⌘ Command + ⌃ Control + S 또는 메뉴 막대의 ‘화면 캡처…’를 누릅니다.
-   편집 화면은 Google Chrome으로 열립니다.
+Installation
+1. Drag Cuevia.app from this disk image into Applications.
+2. Eject the disk image when the copy finishes.
+3. Open Cuevia from Applications. It runs in the menu bar.
+4. Press ⌘ Command + ⌃ Control + S or choose Screen Capture… from the menu bar.
+   The editor opens in Google Chrome.
 
-첫 실행 권한
-• 화면을 캡처하려면 시스템 설정 → 개인정보 보호 및 보안 → 화면 및 시스템 오디오 녹음
-  (macOS 버전에 따라 ‘화면 기록’)에서 Cuevia의 화면 기록 권한을 허용합니다.
-  macOS가 앱 재실행을 요청하면 Cuevia를 종료한 뒤 다시 실행합니다.
-• 음성을 녹음할 때 Chrome의 사이트 마이크 권한과 macOS의 Google Chrome 마이크 권한을 허용합니다.
-• macOS가 실행을 차단하는 경우 배포자에게 현재의 공증된 배포 릴리스를 요청합니다.
+Permissions on first launch
+• In System Settings → Privacy & Security → Screen & System Audio Recording
+  (called Screen Recording on some macOS versions), allow Cuevia to capture your screen.
+  If prompted, quit and reopen Cuevia.
+• To record audio, allow microphone access for the site in Chrome and for Google Chrome in macOS.
+• If macOS blocks the app, ask the distributor for the current notarized release.
 
-본인의 설정
-메뉴 막대의 Cuevia 아이콘 → ‘설정…’을 열고, 본인의 OpenAI API 키와 음성 전사 모델을
-선택해 저장합니다. 기본 음성 전사 모델은 whisper-1입니다.
-키를 타인에게 공유하거나 앱 번들 안에 넣지 마세요.
-설정은 ~/Library/Application Support/Cuevia/.env에 보관됩니다.
-이미지에 포함된 Cuevia.env.example은 키가 비어 있는 참고용 공개 설정 예제입니다.
+Your settings
+Open Settings… from the Cuevia icon in the menu bar. Enter your OpenAI API key,
+choose a speech transcription model, and save. The default model is whisper-1.
+Keep your key private and outside the app bundle.
+Settings are stored in ~/Library/Application Support/Cuevia/.env.
+The included Cuevia.env.example is a public configuration sample with an empty key.
 
-‘기록’은 API 키 없이 화면과 텍스트 설명을 저장할 수 있습니다.
-‘녹음’과 음성 전사에는 본인의 OpenAI API 키가 필요합니다. 녹음 파일은 전사를 위해
-OpenAI API로 전송되며, 본인의 API 사용 요금이 발생할 수 있습니다.
+Log can save captures and text explanations without an API key.
+Record and speech transcription require your OpenAI API key. Cuevia sends the audio
+to the OpenAI API for transcription. Usage charges may apply to your account.
 
-자동 실행
-이 DMG는 로그인 시 자동 실행을 등록하지 않습니다. 원하면 시스템 설정 → 일반 →
-로그인 항목 및 확장 프로그램에서 사용자가 직접 Cuevia를 추가합니다.
+Launch at login
+To launch Cuevia at login, add it in System Settings → General →
+Login Items & Extensions. The DMG leaves that setting for you to configure.
 
-포함된 파일
-Cuevia.app, Applications 폴더 링크, 이 안내문, 키가 비어 있는 Cuevia.env.example만 제공합니다.
-배포자의 개인 설정 파일, API 키, 녹음, 원본 화면, 세션 자료는 포함하지 않습니다.
+Included files
+The disk image contains Cuevia.app, an Applications shortcut, this guide, and Cuevia.env.example with an empty key.
+The distributor's personal settings, API keys, recordings, original captures, and session materials are excluded.

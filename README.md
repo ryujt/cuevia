@@ -1,163 +1,163 @@
 # Cuevia
 
-macOS에서 **Command+Control+S → 모니터·프로그램 선택 → 캡처 → 음성·텍스트 설명 → 프롬프트 복사**로 이어지는 로컬 도구다. 실행하면 메뉴 막대에서 대기하고, 캡처한 화면의 편집 UI는 **Google Chrome**으로 열린다. 이미지와 음성을 로컬 자료 폴더에 모으고, 그 절대 경로가 포함된 요청문을 에이전트에 붙여 넣는다.
+Cuevia is a local macOS tool for capturing a monitor or app, adding voice and text explanations, and copying a prompt. Press **Command+Control+S** to start. Cuevia waits in the menu bar and opens the capture editor in **Google Chrome**. It collects images and audio in a local materials folder. Paste the generated request, which includes absolute paths to those files, into your agent.
 
-## Windows 배포
+## Windows distribution
 
-Windows 10 1809 이상 x64용 설치 파일은 Inno Setup으로 만든다. 빌드 PC에 Go 1.27 이상과 Inno Setup 6.3 이상이 필요하며, 설치 대상 PC에는 필요하지 않다.
+Inno Setup packages the installer for Windows 10 version 1809 or later on x64. The build PC needs Go 1.27 or later and Inno Setup 6.3 or later. The target PC needs neither.
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/package-windows.ps1 -Verify
-# 버전 또는 컴파일러 경로 지정
+# Specify the version or compiler path
 # scripts/package-windows.ps1 -AppVersion 0.2.2 -IsccPath 'C:\Program Files\Inno Setup 7\ISCC.exe'
 ```
 
-결과는 `dist/releases/Cuevia-0.2.2-windows-x64-setup.exe`와 SHA-256 파일이다. 기존 버전의 설치 파일은 덮어쓰지 않는다. 사용자별 `%LOCALAPPDATA%\Programs\Cuevia`에 설치하고 시작 메뉴 및 선택적 바탕 화면 바로가기를 만든다. PowerShell 창 없이 브라우저와 트레이 아이콘이 열리며, 트레이의 **프로그램 종료**로 종료한다. 이미 실행 중이면 기존 화면을 다시 열고, 포트 8742가 사용 중이면 다음 포트를 시도한 뒤 임의 포트로 전환한다. GUI 런처의 Windows Job Object가 자식 서버를 관리하므로 강제 종료 시에도 서버가 남지 않는다. 업데이트·제거 전에 녹음과 저장을 마치고 종료한다. 제거 시 `%APPDATA%\Cuevia`의 설정과 자료는 보존한다. 개인 `.env`·API 키·기록은 배포 파일에 포함하지 않는다. 현재 Windows 설치 파일에는 코드 서명이 없다.
+The build produces `dist/releases/Cuevia-0.2.2-windows-x64-setup.exe` and a SHA-256 checksum file. It leaves existing versioned installers intact. Installation is per user under `%LOCALAPPDATA%\Programs\Cuevia`, with a Start menu shortcut and an optional desktop shortcut. Cuevia opens a browser and tray icon without a PowerShell window. Choose **Exit** from the tray to quit. Launching again reopens the existing instance. If port 8742 is busy, Cuevia tries subsequent ports before falling back to a system-assigned port. The GUI launcher manages the child server through a Windows Job Object so the server also stops if the launcher is terminated. Finish recording and saving, then exit before updating or uninstalling. Uninstallation preserves settings and materials in `%APPDATA%\Cuevia`. The distribution excludes private `.env` files, API keys, and records. The current Windows installer is unsigned.
 
-Windows에서는 **Ctrl+Alt+S**, 트레이의 **캡처 시작**, 또는 트레이 아이콘 더블클릭으로 화면 영역을 드래그해 캡처한다. Esc로 취소한다. 캡처 이미지는 기존 PNG 검증·저장 경로를 거쳐 브라우저에서 표시·설명·프롬프트 생성에 사용한다. 웹의 캡처 버튼도 트레이 선택기를 호출한다. macOS의 모니터·프로그램 선택 방식은 Windows에 제공하지 않는다. 텍스트 기록·브라우저 마이크 녹음·아카이브를 지원하며, 전사 API 키는 웹 UI의 설정에서 입력한다.
+On Windows, press **Ctrl+Alt+S**, choose **Start Capture** in the tray, or double-click the tray icon. Drag to select an area and press Esc to cancel. The captured image goes through the existing PNG validation and storage path, then opens in the browser for annotation, description, and prompt generation. The web capture button also opens the tray picker. Windows uses region selection, while monitor and application selection are macOS features. Windows supports text logging, browser microphone recording, and archives. Enter the transcription API key in the web settings.
 
-`-Verify`는 별도 AppId와 임시 사용자 폴더를 사용해 설치, 포트 충돌, 중복 실행, 강제 종료 후 서버 정리, 단축키 등록, 실제 영역 선택·PNG 가져오기, 취소, 트레이 종료와 제거를 검증한다. 기존 사용자 설치와 기록은 변경하지 않는다.
+`-Verify` uses a separate AppId and a temporary user folder to test installation, port conflicts, repeat launches, server cleanup after forced termination, hotkey registration, real region selection and PNG import, cancellation, exit from the tray, and uninstallation. Existing user installations and records are preserved.
 
-## 설치와 실행
+## Installation and launch
 
-macOS 14 이상, Go 1.27 이상, Xcode Command Line Tools, Google Chrome이 필요하다. 음성 전사는 인터넷에 연결해 **OpenAI API의 `whisper-1`**을 사용한다. 메뉴 막대의 **설정…**에서 본인의 OpenAI API 키를 입력하고 전사 모델을 선택할 수 있다. 기본 모델은 기존과 같은 `whisper-1`이다.
+Building from source requires macOS 14 or later, Go 1.27 or later, Xcode Command Line Tools, and Google Chrome. Speech transcription uses the **OpenAI `whisper-1` API** over the internet. Enter your API key and choose a transcription model under **Settings…** in the menu bar. The default remains `whisper-1`.
 
 ```sh
-# 설정 파일이 없을 때만 예제 복사 후 OPENAI_API_KEY 입력
+# Copy the example only if the configuration is missing, then enter OPENAI_API_KEY
 test -f .env || cp .env.example .env
-# 빌드, 사용자 Applications 설치, 로그인 시 자동 실행 등록 및 시작
+# Build, install to the user's Applications folder, register launch at login, and start
 ./install.sh
 ```
 
-`install.sh`는 어느 작업 폴더에서 실행해도 프로젝트 위치를 찾아 현재 Mac용 앱을 빌드한다. 설치 위치는 `~/Applications/Cuevia.app`이며, `~/Library/LaunchAgents/dev.cuevia.desktop.startup.plist`를 등록해 재부팅 후 사용자 로그인 시 백그라운드에서 시작한다. 앱을 메뉴에서 종료하면 종료 상태를 유지하고, 다음 로그인에 다시 시작한다. 이후 업데이트도 같은 스크립트를 실행한다.
+`install.sh` finds the project from any working directory and builds for the current Mac. It installs to `~/Applications/Cuevia.app` and registers `~/Library/LaunchAgents/dev.cuevia.desktop.startup.plist` so Cuevia starts in the background when you log in after a reboot. Quitting from the menu keeps it closed until the next login. Run the same script to update.
 
-삭제하려면 녹음·기록을 마무리한 뒤 아래를 실행한다. `sudo`는 사용하지 않는다.
+Finish recording and logging before uninstalling with the commands below. Run them without `sudo`.
 
 ```sh
-./uninstall.sh --dry-run  # 제거 대상만 확인
-./uninstall.sh            # install.sh로 설치한 사용자 앱 제거
-# DMG를 응용 프로그램 폴더에 설치했다면:
+./uninstall.sh --dry-run  # Preview what will be removed
+./uninstall.sh            # Remove the per-user app installed by install.sh
+# If you installed from the DMG into Applications:
 ./uninstall.sh --app /Applications/Cuevia.app
 ```
 
-삭제 스크립트는 선택한 Cuevia 앱을 정상 종료하고 해당 자동 실행 항목을 해제한 뒤 앱과 plist를 사용자 휴지통으로 옮긴다. API 키·설정·캡처·녹음·아카이브와 소스의 `dist` 빌드는 보존한다. 다른 설치본을 가리키는 자동 실행 항목은 유지한다. 복구하려면 출력된 휴지통 폴더에서 파일을 원래 위치로 되돌린다. 소스로 재설치하려면 `./install.sh`를 다시 실행한다.
+The uninstaller quits the selected Cuevia app cleanly, unregisters its login item, and moves the app and plist to your Trash. It preserves API keys, settings, captures, recordings, archives, and the source tree's `dist` builds. It leaves login entries pointing to other installations intact. To restore, return the files from the Trash folder shown by the script to their original locations. To reinstall from source, run `./install.sh` again.
 
-처음 소스로 설치할 때 프로젝트의 `.env`를 `~/Library/Application Support/Cuevia/.env`에 접근 권한 `0600`으로 복사한다. 설치 앱은 이 설정을 직접 읽으므로 소스 프로젝트의 위치나 실행 작업 폴더에 의존하지 않는다. 설정 화면에서 저장한 파일에는 `CUEVIA_SETTINGS_VERSION=1`이 기록되며, 이후 `./install.sh`를 실행해도 보존한다. 아직 설정 화면에서 저장하지 않았다면 프로젝트의 `.env`를 수정한 뒤 재설치하면 설치 설정도 갱신된다. 키는 앱 번들이나 자동 실행 plist에 넣지 않는다. 기존 세션·캡처·음성 자료는 현재의 로컬 보관 위치를 계속 사용한다.
+On the first source installation, the script copies the project's `.env` to `~/Library/Application Support/Cuevia/.env` with `0600` permissions. The installed app reads that file directly, independently of the source tree or working directory. Saving in Settings writes `CUEVIA_SETTINGS_VERSION=1`, and later runs of `./install.sh` preserve that file. If you have yet to save in Settings, update the project's `.env` and reinstall to refresh the installed settings. The key stays out of the app bundle and login plist. Existing sessions, captures, and audio continue to use their current local storage.
 
-### DMG로 배포
+### Distribute as a DMG
 
-일반 사용자는 [Cuevia 다운로드와 사용 가이드](https://tools.camp/cuevia)에서 DMG를 받아 앱을 응용 프로그램 폴더에 넣는다. Go나 Xcode는 필요하지 않다. API 키는 첫 실행 후 메뉴 막대의 **설정…**에서 입력한다.
+Users can download the DMG from the [Cuevia download and user guide](https://tools.camp/cuevia) and drag the app into Applications. Go and Xcode are unnecessary. Enter the API key under **Settings…** in the menu bar after first launch.
 
-배포자는 Developer ID Application 인증서의 개인 키가 있는 Mac에서 다음을 실행한다. 기본값은 Apple Silicon과 Intel을 모두 포함하는 Universal 앱이며, 앱과 DMG를 각각 Apple에 공증하고 티켓을 붙인다.
+On a Mac with the private key for a Developer ID Application certificate, run the command below. The default is a Universal app for Apple Silicon and Intel. The app and DMG are notarized separately with Apple and both receive stapled tickets.
 
 ```sh
-CUEVIA_SIGN_IDENTITY='<인증서 이름 또는 SHA-1>' \
-CUEVIA_NOTARY_PROFILE='<notarytool 키체인 프로필>' \
+CUEVIA_SIGN_IDENTITY='<certificate name or SHA-1>' \
+CUEVIA_NOTARY_PROFILE='<notarytool Keychain profile>' \
 sh scripts/package-macos.sh
 ```
 
-프로필 대신 `CUEVIA_NOTARY_KEY`(기존 `.p8` 경로), `CUEVIA_NOTARY_KEY_ID`, `CUEVIA_NOTARY_ISSUER`를 지정할 수 있다. `CUEVIA_APP_VERSION`과 `CUEVIA_BUILD_NUMBER`로 릴리스를 구분하며 이미 존재하는 버전 파일은 덮어쓰지 않는다. 검증을 통과하면 `dist/releases/`에 DMG·SHA-256·배포 메타데이터를 만들고 사이트의 `src/data/cuevia-release.json`을 갱신한다. 다운로드 파일을 먼저 업로드한 뒤 웹을 배포한다. 실제 키·개인 설정·기록 자료는 설치 파일에 포함하지 않는다. 공증 없는 시험 파일은 `CUEVIA_RELEASE_MODE=preview`를 명시해야 하며 사이트에 정식 릴리스로 게시하지 않는다.
+As an alternative to the profile, set `CUEVIA_NOTARY_KEY` (path to an existing `.p8`), `CUEVIA_NOTARY_KEY_ID`, and `CUEVIA_NOTARY_ISSUER`. Set `CUEVIA_APP_VERSION` and `CUEVIA_BUILD_NUMBER` to identify the release. Existing versioned files are preserved. After verification, the script writes the DMG, SHA-256 checksum, and release metadata to `dist/releases/` and updates the site's `src/data/cuevia-release.json`. Upload the download before deploying the site. The installer excludes real keys, personal settings, and records. To build an unnotarized test file, set `CUEVIA_RELEASE_MODE=preview` and keep it out of the site's official releases.
 
-개발 실행은 현재 작업 폴더의 `.env`를 먼저 찾고, 없으면 개발 번들 `dist/Cuevia.app`가 있는 프로젝트 루트의 `.env`를 찾는다. 설치 앱은 별도 보관한 설정을 우선한다. 이미 지정된 프로세스 환경변수가 파일 값보다 우선한다. `OPENAI_TRANSCRIPTION_MODEL=whisper-1`은 생략하면 같은 값이 적용된다. `CUEVIA_ADDR=127.0.0.1:8742`는 기본 서버 주소다. 별도 설정 파일은 프로세스 환경변수 `CUEVIA_ENV_FILE`로 지정한다. 키는 서버에서만 사용하며 UI 응답이나 복사되는 요청문에 포함하지 않는다.
+During development, Cuevia first looks for `.env` in the current working directory, then in the project root containing the development bundle `dist/Cuevia.app`. Installed apps prefer the separately stored configuration. Existing process environment variables take precedence over file values. `OPENAI_TRANSCRIPTION_MODEL` defaults to `whisper-1` and `CUEVIA_ADDR` to `127.0.0.1:8742`. Set `CUEVIA_ENV_FILE` in the process environment to point to a different settings file. The key is used only on the server and stays out of UI responses and copied requests.
 
-### OpenAI 설정
+### OpenAI settings
 
-메뉴 막대의 **설정…** 또는 웹 화면의 **설정**을 누른다. **OpenAI API 키**는 비밀번호 필드로 입력하며, 기존 키의 유무만 표시한다. 키를 비워 두고 **저장**하면 기존 키를 유지한다. 모델만 바꿔도 키는 유지하며, 저장 후 입력 필드는 비운다.
+Open **Settings…** from the menu bar or **Settings** in the web editor. Enter the **OpenAI API Key** in the password field. The UI shows only whether a key exists. Leave the field empty when saving to keep the existing key, including when changing only the model. The field clears after saving.
 
-- `whisper-1`: 기본 모델. 발화 구간별 시각으로 화면과 설명을 연결한다.
-- `gpt-4o-transcribe`, `gpt-4o-mini-transcribe`: 문장별 구간 시각을 제공하지 않는다. 녹음 전체를 하나의 구간으로 보존하고, 화면·대상은 후보로 남겨 확인하도록 표시한다. 화면과 시각을 세밀하게 연결하려면 `whisper-1`을 사용한다.
+- `whisper-1` is the default. Speech segment timestamps connect explanations to captures.
+- `gpt-4o-transcribe` and `gpt-4o-mini-transcribe` provide no segment timestamps. Cuevia preserves the whole recording as one segment and displays possible captures and targets for review. Use `whisper-1` to link captures and speech more precisely.
 
-**저장 후 다음 전사 요청부터 바로 적용되며 앱 재시작은 필요 없다.** 이미 전송 중인 요청은 기존 키와 모델로 완료한다. 녹음 중에도 설정을 저장할 수 있으며, 아직 전사 요청을 보내기 전인 녹음에는 새 설정을 사용한다. 메뉴에서 연 설정 탭은 편집기 세션·마이크·편집 권한을 건드리지 않는다.
+**Changes take effect on the next transcription request without restarting the app.** Requests already in flight finish with the previous key and model. You can save settings while recording. A recording whose transcription request has yet to be sent uses the new settings. The settings tab opened from the menu leaves the editor session, microphone, and edit permissions intact.
 
-설정은 `~/Library/Application Support/Cuevia/.env`에 원자적으로 저장하며 파일 권한은 `0600`, 설정 폴더는 `0700`이다. 기존의 다른 환경 설정값은 유지한다. 설정 화면에서 저장한 키·모델은 이후 실행에도 우선 적용한다. 최초 설치 시 복사된 설정 파일만 있으면 기존의 프로세스 환경변수 우선순위를 유지한다. `CUEVIA_ENV_FILE`과 개발 폴더 `.env`는 저장된 앱 설정이 없을 때 전사의 초기값으로 사용하며, 설정 화면에서 저장하면 항상 위의 앱 설정 파일을 갱신한다. 다른 환경변수를 읽는 기존 우선순위는 유지한다. 설정 화면에도 실제 저장 경로를 표시한다.
+Cuevia atomically saves settings to `~/Library/Application Support/Cuevia/.env` with file permissions `0600` and directory permissions `0700`. It preserves other environment settings. The key and model saved in Settings take precedence on future runs. If only the file copied at first installation exists, existing process environment precedence still applies. `CUEVIA_ENV_FILE` and the development folder's `.env` supply initial transcription values when app settings have yet to be saved. Saving in Settings always updates the app settings file above. Other environment variables retain their existing precedence. The settings screen displays the actual save path.
 
-앱은 창이나 Chrome을 바로 열지 않는다. **⌘ Command + ⌃ Control + S** 또는 메뉴 막대의 **화면 캡처…**를 누르면 두 탭의 선택 화면이 열린다. 기본 **어플리케이션 캡처**에서 창 위로 마우스를 옮기면 영역 테두리와 PID가 표시되고 클릭해 캡처한다. **모니터 캡처**에서는 실제 미리보기를 클릭해 캡처한다. 모니터 전체나 선택한 프로그램의 창을 실제 PNG로 캡처하며, 취소하거나 실패하면 기존 기록이 유지된다. 프로그램의 이름·PID·창 ID 또는 모니터의 표시 ID·해상도·배율이 장면에 함께 기록된다. 종료는 메뉴 막대의 **종료**를 사용한다.
+Cuevia starts in the menu bar without opening a window or Chrome. Press **⌘ Command + ⌃ Control + S** or choose **Screen Capture…** to open the two-tab picker. In the default **Application Capture** tab, hover over a window to see its outline and PID, then click to capture it. In **Monitor Capture**, click a live preview. Cuevia captures the entire monitor or selected application window as a PNG. Canceling or a capture failure preserves the existing record. The scene records the app name, PID, and window ID or the monitor's display ID, resolution, and scale. Choose **Quit** in the menu bar to exit.
 
-화면 캡처에는 macOS의 화면 기록 권한이 필요하다. 마이크는 Chrome의 사이트 권한과 macOS의 Chrome 마이크 권한을 허용한다. 앱 번들은 `dev.cuevia.desktop` 식별자와 권한 용도 설명을 포함한다. 빌드 시 키체인에 유효한 Apple Development 또는 Developer ID Application 인증서가 하나 있으면 자동 선택한다. 여러 개면 기존 설치 앱, 이전 빌드와 서명자가 일치하는 인증서를 차례로 우선하고, 일치하는 인증서가 없으면 하나뿐인 Apple Development 인증서를 사용한다. 그래도 후보가 여러 개면 `CUEVIA_SIGN_IDENTITY`에 이름이나 SHA-1을 지정한다. 명시한 값은 자동 선택보다 우선하며, DMG 배포는 계속 Developer ID Application 인증서를 사용한다. 실제 인증서 서명에는 Hardened Runtime을 적용한다. 처음 서명 방식을 변경하면 화면 기록 권한을 현재 설치 앱에 다시 등록해야 하며, 이후 같은 인증서·식별자로 빌드하면 앱의 서명 식별 조건을 유지한다. 로컬 개발용 Apple Development 서명은 App Store 제출·Developer ID 배포·공증과 구분한다. 명시적으로 임시 서명이 필요할 때만 `CUEVIA_SIGN_IDENTITY=-`를 사용할 수 있다. [Apple의 서명 요구사항 설명](https://developer.apple.com/documentation/technotes/tn3127-inside-code-signing-requirements)
+Screen capture requires macOS screen recording permission. For microphone recording, allow microphone access for the site in Chrome and for Chrome in macOS. The app bundle includes the identifier `dev.cuevia.desktop` and permission usage descriptions. The build automatically uses a single valid Apple Development or Developer ID Application certificate in Keychain. With several candidates, it first looks for the signer of the installed app, then the previous build. If neither matches, it uses the sole Apple Development certificate when available. If multiple candidates remain, set `CUEVIA_SIGN_IDENTITY` to a name or SHA-1 fingerprint. An explicit identity takes precedence, and DMG distribution continues to use Developer ID Application. Signing with a certificate enables the hardened runtime. When you first change the signing method, grant screen recording permission to the currently installed app again. Subsequent builds with the same certificate and identifier preserve the app's designated requirement. Apple Development signing is for local development. Use `CUEVIA_SIGN_IDENTITY=-` when you specifically need ad hoc signing. See [Apple's code signing requirements](https://developer.apple.com/documentation/technotes/tn3127-inside-code-signing-requirements).
 
-앱 아이콘 원본은 [`assets/Cuevia.png`](assets/Cuevia.png)다. 빌드 스크립트가 일반·Retina 크기의 `.icns`를 만들어 앱 리소스에 포함한다. 캡처와 음성을 상징하는 보라·청록 아이콘이다. 최종 생성 프롬프트는 [`assets/icon-prompt.txt`](assets/icon-prompt.txt)에 보관한다.
+The icon source is [`assets/Cuevia.png`](assets/Cuevia.png). The build script generates an `.icns` with standard and Retina sizes and bundles it as an app resource. The purple and teal icon represents capture and voice. The final generation prompt is in [`assets/icon-prompt.txt`](assets/icon-prompt.txt).
 
-### 웹 화면만 업데이트
+### Update only the web UI
 
-설치 앱은 `~/Library/Application Support/Cuevia/web`의 웹 파일을 읽으며, 별도 파일이 없으면 실행 파일에 포함된 화면을 사용한다. 앱을 업그레이드했을 때 웹 파일의 `frontend-version.json`이 없거나 앱의 API 버전과 다르면 새 앱에 포함된 화면으로 자동 전환한다. 이 기능이 없는 이전 앱은 `./install.sh`로 한 번 업데이트한다. 이후 HTML·CSS·JavaScript만 수정했을 때는 다음 명령 후 Chrome의 Cuevia 탭을 새로고침하면 된다. 앱 재시작·재서명은 필요 없다. Go API나 저장 계약을 변경하면 앱도 다시 설치해야 한다.
+The installed app reads the web files from `~/Library/Application Support/Cuevia/web` and falls back to the embedded UI if no external files are available. After an app upgrade, it also falls back to the new embedded UI if `frontend-version.json` is missing or its API version differs from the app's. For older apps without this feature, run `./install.sh` once. For later HTML, CSS, or JavaScript changes, run the command below and refresh Cuevia in Chrome. This requires neither restarting nor re-signing the app. Reinstall the app when changing the Go API or storage contract.
 
 ```bash
 python3 scripts/update-web.py
 ```
 
-Python 3가 필요하며, 업데이트 스크립트는 새 웹 파일을 별도 버전 폴더에 완성한 뒤 심볼릭 링크를 교체한다. `.env`와 세션 자료, 서명된 앱 번들은 변경하지 않는다. 개발 서버에서 소스 파일을 바로 제공하려면 `CUEVIA_WEB_DIR="$PWD/web" go run . -web-only`를 사용할 수 있다.
+The update script requires Python 3. It stages the new web files in a separate versioned folder and then swaps the symlink. It preserves `.env`, session materials, and the signed app bundle. To serve files directly from the source tree in development, run `CUEVIA_WEB_DIR="$PWD/web" go run . -web-only`.
 
-### 캡처 목록과 삭제
+### Capture list and deletion
 
-하단 목록을 가로로 스크롤한 뒤 캡처나 설명을 선택해도 스크롤 위치를 유지한다. 각 캡처의 휴지통 버튼은 해당 캡처와 연결된 설명을 목록·새 프롬프트·새로 생성하는 이미지 자료에서 제외하며, **삭제 취소**로 최근 삭제부터 복원한다. 삭제 상태는 재시작 후에도 유지된다. 모든 캡처를 삭제해도 화면 추가와 삭제 취소를 사용할 수 있다.
+The bottom list retains its horizontal scroll position when you select a capture or explanation. A capture's trash button excludes it and its associated explanations from the list, new prompts, and newly generated image materials. **Undo Delete** restores the most recently deleted item first. Deletion state persists after restart. You can still add captures or undo a deletion after deleting every capture.
 
-이 삭제는 복원 가능한 제외 처리다. 원본·녹음은 기존 7일 보관 정책을 따르고 이미 생성한 요청 자료는 바꾸지 않는다. 입력 중인 설명이 있거나 녹음·오디오 저장 중이면 먼저 마무리해야 캡처를 삭제할 수 있다.
+Deletion is reversible. Originals and recordings follow the existing 7-day retention policy, and previously generated request materials are preserved. Finish drafting an explanation, recording, or saving audio before deleting a capture.
 
-캡처 목록 검증: 임시 자료로 저장·복원과 화면 동작을 확인했다. 임시 캡처 12개를 사용하는 실제 Chrome 화면에서 목록 끝 캡처 선택 후 가로 스크롤 유지, 삭제·새로고침·삭제 취소를 확인했다. 설치 앱에서는 웹 파일 갱신 전후 프로세스 PID와 서명이 유지되고 변경한 파일이 즉시 제공되는 것을 확인했다.
+Capture list verification used temporary data to check persistence, restoration, and UI behavior. In Chrome with 12 temporary captures, the checks covered horizontal scroll position after selecting the last item, deletion, refresh, and undo. In the installed app, the web update preserved the process PID and signature, and the changed files were served immediately.
 
-초기 설치 검증: Mediawave 팀의 Apple Development 인증서 서명과 `codesign --verify --strict`, 설치 앱의 화면 기록 권한과 캡처 선택 창을 확인했다.
+Initial installation checks covered the Mediawave team's Apple Development signature, `codesign --verify --strict`, the installed app's screen recording permission, and the capture picker.
 
-개발 중에는 다음처럼 실행할 수 있다. `go run` 종료는 터미널에서 Ctrl+C다. 앱과 개발 서버는 같은 포트를 사용하므로 한 번에 하나만 실행한다.
+Run the following commands for development. Press Ctrl+C in Terminal to stop `go run`. The app and development server use the same port, so run one at a time.
 
 ```sh
 go run .
-# 단축키·메뉴 막대 없이 HTTP UI 실행
+# Run the HTTP UI without the hotkey or menu bar
 go run . -web-only
-# 다른 포트
+# Use a different port
 go run . -addr 127.0.0.1:8743
-# 설치 없이 개발 번들만 빌드
+# Build the development bundle without installing it
 sh scripts/build-macos.sh
 ```
 
-기본 주소는 [http://127.0.0.1:8742/](http://127.0.0.1:8742/)다. 설치 앱의 웹 파일은 위의 웹 업데이트 명령으로 갱신한다.
+The default address is [http://127.0.0.1:8742/](http://127.0.0.1:8742/). Use the web update command above to refresh the installed app's web files.
 
-## 사용과 저장
+## Use Cuevia and save your work
 
-1. **녹음** 또는 **기록**을 누른다. 녹음은 마이크와 음성 전사를 사용하고, 기록은 오디오 없이 화면 선택과 텍스트 설명을 시간순으로 저장한다. 캡처 없이 전체 메모부터 시작할 수도 있다.
-2. 설명할 캡처를 선택하거나 추가하고 텍스트 설명을 남긴다. 두 버튼은 상호 배타적인 토글이며, 활성 버튼을 다시 누르면 종료한다.
-3. 새로 녹음·기록을 시작하거나 다른 방식으로 전환하면 현재 작업의 작성 중인 설명과 프롬프트를 저장한 뒤 아카이브하고 새 버전을 연다. 시간·설명·오디오는 초기화하고 현재 선택한 원본 캡처만 새 버전으로 복사한다.
-4. 화면의 **순번·화살표·네모**로 대상을 표시하고 설명한다. **뒤로**로 마지막 표시나 전체 지우기를 취소할 수 있다.
-5. **아카이브**에서 이전 버전의 프롬프트와 오디오를 읽기 전용으로 확인한다. **프롬프트 만들기 → 프롬프트 복사**로 현재 버전을 전달한다.
+1. Click **Record** or **Log**. Record uses the microphone and speech transcription. Log saves capture selections and text explanations in chronological order without audio. You can start with a general note before adding a capture.
+2. Select or add a capture and enter an explanation. Record and Log are mutually exclusive toggles. Click the active button again to stop.
+3. Starting or switching modes saves the current draft and prompt, archives the current version, and opens a new version. Time, explanations, and audio reset. Only the selected original capture is copied to the new version.
+4. Use **Number**, **Arrow**, or **Rectangle** to mark and describe a target. **Undo** reverses the last annotation or a clear-all action.
+5. Use **Archive** to review past prompts and audio in read-only mode. Choose **Generate Prompt → Copy Prompt** to share the current version.
 
-마이크 허용에 실패한 빈 준비 버전은 재시도할 때 재사용한다. 종료·전환 시점에 시간을 멈추므로 업로드와 전사 대기 시간은 길이에 더하지 않는다. 페이지를 새로 열면 진행 중이던 작업은 마지막 저장 시각에서 중단된 상태로 표시하며, 새 시작은 별도 버전이 된다. 캡처 결과가 새 탭으로 열려도 기존 기록 창에 전달해 진행 중인 마이크와 타이머를 유지한다. 동시에 다른 창에서 같은 버전을 시작하는 동작은 막는다.
+An empty draft version created before microphone permission failed is reused when you retry. The timer stops at the moment you stop or switch modes, excluding upload and transcription waits. Reopening the page shows interrupted work at its last saved time. Starting again creates a separate version. If a capture opens in a new tab, Cuevia sends it to the existing recording window so the microphone and timer stay active. A second window cannot start the same version concurrently.
 
-버전별 세션·오디오·생성 프롬프트는 서로 분리된다. 기존 로컬 7일 보관 정책은 아카이브에도 적용한다.
+Each version has its own session, audio, and generated prompt. The existing 7-day local retention policy also covers archives.
 
-자유롭게 그리는 **펜**만 제거했다. 캡처 위의 **순번·화살표·네모**와 **뒤로(실행 취소)·전체 지우기**는 사용할 수 있다. 전체 지우기를 취소하면 한 번에 복원하며, 개별 실행 취소는 마지막에 만든 표시부터 되돌린다. 숨긴 표시의 번호는 예약해 남은 번호가 바뀌지 않는다. 기존 자유곡선 자료는 원본 세션에 남지만 화면·새 프롬프트·이미지에서는 제외한다.
+The freehand **Pen** tool was removed. Captures still support **Number**, **Arrow**, **Rectangle**, **Undo**, and **Clear All**. Undo restores a clear-all action in one step or reverses individual annotations from newest to oldest. Hidden annotations retain their numbers so remaining numbers stay stable. Legacy freehand marks remain in the original sessions and are omitted from the UI, new prompts, and images.
 
-프롬프트는 사용한 이미지를 `S01`, `S02`로 한 번 소개하고 아래 기록에서는 별명만 쓴다. 화면 표시는 `S01#1`처럼 참조하고 좌표는 짧은 픽셀 표기만 사용한다. 이미지에는 보이는 순번·화살표·네모를 같은 번호로 합성하며, 표시가 없는 캡처는 원본을 그대로 사용한다. 발화는 임의로 질문·변경 요청·유지 조건으로 분류하거나 문장별로 나누지 않는다. 첫 녹음 시작을 `00:00`으로 두고 화면 선택·원문 발화·텍스트 설명을 시각순으로 나열한다. 녹음 전 기록과 시각 미상 기록은 구분한다. 화면 전환을 걸친 발화와 시간 불확실성은 별도로 짧게 표시한다.
+The prompt lists each image once as `S01`, `S02`, and so on, then uses these aliases throughout the log. It refers to annotations as `S01#1` and uses short pixel coordinates. Visible numbers, arrows, and rectangles are composited into the image with the same numbers. Captures without marks use the original image. Speech stays in its original segments without inferred classifications. The first recording starts at `00:00`. Capture selections, verbatim speech, and typed explanations follow in timestamp order. Entries made before recording and entries with unknown timing are distinct. Speech that spans a capture change and uncertainty about timing are marked briefly.
 
 ```text
-## 화면
-- S01: Job Flow Editor · 3008×3324 px · [이미지 열기](...)
+## Captures
+- S01: Job Flow Editor · 3008×3324 px · [Open image](...)
 
-## 타임라인
-[00:00.000] 화면 선택 S01
-[00:05.000] 말 1 (S01): "위아래 간격을 줄여주세요."
-[00:18.000] 메모 2 (S01): "오른쪽 패널도 같은 간격으로 맞춰주세요."
+## Timeline
+[00:00.000] Selected capture S01
+[00:05.000] Speech 1 (S01): "Please reduce the vertical spacing."
+[00:18.000] Note 2 (S01): "Use the same spacing in the right panel."
 ```
 
-녹음은 실제 마이크 입력이며 **16 kHz·모노·PCM16 WAV**로 저장한다. 서버가 녹음 파일을 선택한 OpenAI 모델에 보내 한국어 전사를 받는다. 기본 `whisper-1`은 `verbose_json`과 세그먼트 타임스탬프를 사용하며, 반환된 초 단위 시각을 화면과 연결할 밀리초로 변환한다. GPT 전사 모델은 JSON 텍스트를 녹음 전체 구간에 보존하며 `timingEstimated`로 문장별 시각이 없음을 표시한다. 화면·대상을 자동 확정하지 않으며 UI와 프롬프트에도 **문장별 시각 없음 · 녹음 전체 구간**을 표시한다. [OpenAI 공식 전사 API](https://developers.openai.com/api/reference/resources/audio/subresources/transcriptions/methods/create)
+Cuevia records microphone input as **16 kHz mono PCM16 WAV**. The server sends it to the selected OpenAI model for Korean transcription. The default `whisper-1` returns `verbose_json` with segment timestamps, which Cuevia converts from seconds to milliseconds for alignment with captures. GPT transcription models return JSON text for the entire recording. Cuevia preserves it as one segment and uses `timingEstimated` to indicate missing per-sentence timestamps. The UI and prompt identify the full-recording timing and leave captures and targets unconfirmed. See the [OpenAI transcription API reference](https://developers.openai.com/api/reference/resources/audio/subresources/transcriptions/methods/create).
 
-API가 원음보다 긴 발화 구간을 반환하면 원음 끝으로 제한하고, 원래 구간 시각과 보정 여부도 보존한다. 한 녹음은 최대 5분이며, 전사 실패 시 원음이 남아 **전사 다시 시도**가 가능하다. 자동 재시도나 다른 전사 제공자로의 전환은 하지 않는다.
+If a speech segment returned by the API extends past the original audio, Cuevia clamps it to the end and retains the original timestamps and whether they were adjusted. Each recording is limited to 5 minutes. If transcription fails, Cuevia keeps the original audio and offers **Retry Transcription**. Retries are manual and use the same provider.
 
-세션, 원본 캡처, 설명 초안, 원음, 전사 결과는 macOS 사용자 Application Support의 `Cuevia/sessions`에 저장한다. 브라우저나 앱을 다시 열면 보존 기간 안의 최근 세션을 복원한다. 캡처 캐시는 사용자 Caches의 `Cuevia/prototype/captures`에 둔다.
+Sessions, original captures, draft explanations, original audio, and transcripts are stored under `Cuevia/sessions` in the macOS user's Application Support directory. Reopening the browser or app restores recent sessions within the retention period. The capture cache is under `Cuevia/prototype/captures` in the user's Caches directory.
 
-생성 자료는 Application Support의 `Cuevia/requests/YYYY-MM-DD/HHmmss-<세션ID>-r<리비전>-<토큰>/`에 저장한다. `request.md`, `session.json`, 이미지 `images/`, 원음 `audio/`가 포함되며, 표시된 로컬 폴더와 같은 내용의 요청문이 클립보드에 복사된다. 브라우저 다운로드는 사용하지 않는다. 변환하지 못한 녹음도 원래 형식으로 세션과 자료에 보관한다.
+Generated materials go to `Cuevia/requests/YYYY-MM-DD/HHmmss-<sessionID>-r<revision>-<token>/` in Application Support. The folder contains `request.md`, `session.json`, `images/`, and `audio/`. The clipboard receives the same request as in the displayed local folder. Files are saved locally without a browser download. Audio that could not be converted is preserved in its original format in the session and generated materials.
 
-로컬 기록은 **마지막 저장 후 7일**, 생성 자료는 **생성 후 7일**이 지나면 자동 삭제한다. 캡처 캐시와 앱이 관리하는 임시 처리 기록도 7일 후 삭제하며, 앱 시작 시와 실행 중 매시간 만료 항목을 정리한다. 앱이 꺼져 있던 동안 만료된 항목은 다음 시작 때 정리한다. 편집 중인 세션은 주기적으로 저장한다. 브라우저의 만료된 임시 기록도 복원하지 않는다.
+Local records expire **7 days after the last save**. Generated materials expire **7 days after creation**. The capture cache and app-managed temporary processing records also expire after 7 days. Cleanup runs at startup and hourly while the app is running. Items that expire while the app is closed are cleaned up at next startup. The editor periodically saves active sessions, and expired temporary browser records are skipped on restore.
 
-전사 모델 파일을 로컬에 설치하거나 경로를 설정할 필요는 없다. 프롬프트 생성은 화면 선택과 설명을 시간순으로 정리하며, 요청문은 사용자가 에이전트에 붙여 넣어 전달한다.
+Cuevia requires no local transcription model files or paths. Prompt generation puts capture selections and explanations in chronological order so you can paste the request into an agent.
 
-## 개발과 검증
+## Development and verification
 
-순번·화살표·네모 복구 검증: Node 테스트 81개로 세 도구·펜 제외·좌표 변환·실행 취소·전체 지우기·번호 예약·프롬프트 연결·버전 분리를 확인한다. Go 테스트는 표시가 있는 화면만 해당 리비전의 합성 PNG를 요구하며, 숨긴 표시나 펜만 있는 화면은 원본으로 내보내는 경로를 검사한다.
+Annotation restoration was verified with 81 Node tests covering Number, Arrow, Rectangle, pen exclusion, coordinate conversion, undo, clear-all, number reservation, prompt references, and version isolation. Go tests verify that only captures with visible annotations need a composite PNG for the current revision. Captures with only hidden or legacy pen marks export the original.
 
-녹음·기록 버전 검증: `go test ./...`, `go vet ./...`, Node 테스트로 상호 배타적인 토글·시간 초기화·작성 중 설명 보존·마이크 오류·저장 지연·아카이브 읽기 전용·전환 실패 복구를 확인한다. 임시 세션으로 실제 Chrome의 텍스트 기록 시작·종료·새 버전·이전 프롬프트 열람·아카이브 오디오 재생도 확인했다. 실제 마이크 입력 검증과 대역 검증은 구분한다.
+Recording and logging version checks use `go test ./...`, `go vet ./...`, and Node tests for mutually exclusive toggles, time reset, draft preservation, microphone errors, save delays, read-only archives, and recovery from a failed switch. A temporary session in Chrome also verified starting and stopping a text log, opening a new version, reading a past prompt, and playing archive audio. Physical microphone input and audio bandwidth are verified separately.
 
-2026-10-31 판서 제거 검증: `go test ./...`, `go vet ./...`, 브라우저 모델·앱·녹음 테스트 39개가 통과했다. 서명된 설치 앱의 실제 Chrome에서 기존 세션을 열고 새 요청 자료를 생성했다. 원본 PNG 바이트 일치, 설명 9개 보존, 이미지 경로 1회, 과거 판서 필드의 원본 보존과 새 자료 제외를 확인했다. 해당 예시의 경로 포함 프롬프트는 21,961자에서 1,918자로 줄었다.
+Freehand removal verification on 2026-10-31 passed `go test ./...`, `go vet ./...`, and 39 browser model, app, and recording tests. An existing session was opened in Chrome through the signed installed app, and new request materials were generated. Checks confirmed byte-for-byte original PNGs, all 9 explanations, one image path occurrence, and legacy freehand fields preserved in the original session and omitted from new materials. The sample prompt, including paths, shrank from 21,961 to 1,918 characters.
 
-네이티브 단축키·출처 선택은 [platform_darwin.go](platform_darwin.go)와 [capture_sources.go](capture_sources.go), 녹음은 [web/recorder.js](web/recorder.js), OpenAI 전사는 [openai_transcription.go](openai_transcription.go), 영속 저장과 로컬 자료 생성은 [session_store.go](session_store.go)와 [session_materials.go](session_materials.go), 7일 자동 삭제는 [retention.go](retention.go)가 맡는다. HTTP 조립 경로는 [application_http.go](application_http.go)에 있다.
+Native hotkeys and source selection are in [platform_darwin.go](platform_darwin.go) and [capture_sources.go](capture_sources.go). Recording is in [web/recorder.js](web/recorder.js) and OpenAI transcription is in [openai_transcription.go](openai_transcription.go). [session_store.go](session_store.go) and [session_materials.go](session_materials.go) handle persistence and local materials. [retention.go](retention.go) handles 7-day cleanup. HTTP wiring is in [application_http.go](application_http.go).
 
 ```sh
 go test ./...
@@ -168,7 +168,7 @@ sh scripts/test-native-picker.sh
 sh scripts/build-macos.sh
 ```
 
-일반 테스트의 OpenAI 검사는 HTTP 테스트 서버로 전송 계약·타임스탬프·취소·API 오류·키 비노출·리다이렉트 차단을 확인하며, 유료 API를 호출하지 않는다. 실제 API 검증은 명시적으로 다음을 실행할 때만 1회 요청한다. `.env`의 키를 읽고 짧은 한국어 음성으로 전사·구간 시각·저장·새 서버 복원을 검사한다. `CUEVIA_TEST_REAL_EXPECT`는 녹음에서 기대하는 구절이다.
+The standard OpenAI tests use a local HTTP test server to cover the upload contract, timestamps, cancellation, API errors, key redaction, and redirect blocking without a paid API call. Running the following explicitly makes one real request. It reads the key from `.env` and uses a short Korean recording to check transcription, segment timing, storage, and restoration from a new server. `CUEVIA_TEST_REAL_EXPECT` is the phrase expected in the recording.
 
 ```sh
 CUEVIA_TEST_OPENAI=1 \
@@ -177,6 +177,6 @@ CUEVIA_TEST_REAL_EXPECT='저장됩니다' \
 go test . -run '^TestOpenAIRealTranscription$' -v
 ```
 
-프로그램 창(1446×1880)과 모니터(6016×3384)의 실제 캡처, Chrome 캡처·설명 연결, PID·모니터 정보가 담긴 프롬프트를 확인했다. 짧은 한국어 음성으로 실제 `whisper-1` API 호출부터 HTTP 전사 경로·구간 시각·원본 시각 보존·저장·새 서버 복원까지 통과했다. 테스트는 로컬 자료 생성·재시도, 정확한 7일 만료 경계, 최근 저장 보존, 삭제와 쓰기의 직렬화, 관리 범위 밖 파일·심볼릭 링크 보호도 검사한다. **현재 검증 환경의 Chrome은 입력 장치를 찾지 못했다. 물리 마이크 입력과 물리 단축키를 시작점으로 하는 전체 사용 흐름은 아직 검증하지 않았다.**
+Verification covered actual captures of an app window (1446×1880) and a monitor (6016×3384), linking captures and explanations in Chrome, and including PID and monitor details in the prompt. A short Korean sample passed the real `whisper-1` API call, HTTP transcription flow, segment timing and original timestamp preservation, storage, and restoration from a new server. Tests also cover local material generation and retry, the exact 7-day expiration boundary, preservation after a recent save, serialized deletion and writes, and protection of out-of-scope files and symlinks. **Chrome in the verification environment found no input devices. The end-to-end flow starting with a physical microphone and keyboard shortcut remains unverified.**
 
-이전 설계 자료(자유곡선 판서 관련 내용은 현재 기능에 적용하지 않음): [TO-BE 설계](docs/design/20261031-093004/to-be/system-design-to-be.md), [화면 이동](docs/design/20261031-093004/to-be/navigation.md), [화면 배치](docs/design/20261031-093004/to-be/screen-layout.md).
+Earlier design documents are available in the [target system design](docs/design/20261031-093004/to-be/system-design-to-be.md), [navigation](docs/design/20261031-093004/to-be/navigation.md), and [screen layout](docs/design/20261031-093004/to-be/screen-layout.md). Their freehand annotation sections describe an earlier design.
