@@ -21,8 +21,8 @@
     var runMode = options.runMode === 'audio' || options.runMode === 'text' ? options.runMode : null;
     var session = {
       id: uid('session'),
-      title: clean(options.title) || '제목 없는 세션',
-      project: clean(options.project) || '개인 프로젝트',
+      title: clean(options.title) || 'Untitled session',
+      project: clean(options.project) || 'Personal project',
       mode: MODES.indexOf(options.mode) >= 0 ? options.mode : 'mixed',
       runMode: runMode,
       runState: 'ready',
@@ -97,12 +97,12 @@
     var starts = recordings.map(function (audio) { return milliseconds(audio.startMs); }).filter(function (value) { return value !== null; });
     var origin = starts.length ? Math.min.apply(null, starts) : 0;
     function clock(value) {
-      if (value === null) return '시각 미상';
+      if (value === null) return 'time unknown';
       var relative = value - origin, absolute = Math.abs(relative);
-      return (relative < 0 ? '녹음 전 -' : '') + time(absolute / 1000) + '.' + String(absolute % 1000).padStart(3, '0');
+      return (relative < 0 ? 'before recording -' : '') + time(absolute / 1000) + '.' + String(absolute % 1000).padStart(3, '0');
     }
     function add(at, text, rank, end) { timeline.push({at: at, end: end === undefined ? null : end, text: text, rank: rank || 0, order: order++}); }
-    function sceneRef(id) { return selected.has(id) && sceneMap.has(id) ? sceneMap.get(id) : '화면?'; }
+    function sceneRef(id) { return selected.has(id) && sceneMap.has(id) ? sceneMap.get(id) : 'screen?'; }
     function targetID(context) { return context.targetId === undefined ? context.target : context.targetId; }
     function linkedMark(sceneId, id) { return id ? supportedAnnotations(sceneData.get(sceneId)).find(function (mark) { return mark.id === id; }) : null; }
     function targetRef(sceneId, id) {
@@ -160,21 +160,21 @@
       }));
     }
 
-    var lines = ['# ' + (inline(session.title) || '제목 없는 세션')];
-    if (Number.isSafeInteger(session.runVersion) && session.runVersion > 0) lines.push('v' + session.runVersion + ' · ' + (textMode ? '기록' : '녹음'));
-    lines.push('', '화면과 기록을 함께 읽고 사용자의 질문·요청을 처리해 주세요. 연결? 항목은 추측하지 마세요.',
-      '시간: ' + (textMode ? '기록 시작' : starts.length ? '첫 녹음 시작' : '세션 시작') + ' 기준. ' + (textMode ? '메모는' : '말·메모는') + ' 원문입니다.', '', '## 화면');
-    if (scenes.some(function (scene) { return supportedAnnotations(scene).some(function (mark) { return !mark.hidden; }); })) lines.push('좌표: px, 좌상단(0,0). Snn#n은 이미지의 표시 번호입니다.');
-    if (!scenes.length) lines.push('캡처된 화면 없음.');
+    var lines = ['# ' + (inline(session.title) || 'Untitled session')];
+    if (Number.isSafeInteger(session.runVersion) && session.runVersion > 0) lines.push('v' + session.runVersion + ' · ' + (textMode ? 'text' : 'recording'));
+    lines.push('', 'Read the screens and the record together, then handle the user\'s questions and requests. Do not guess on entries flagged link?.',
+      'Times: relative to ' + (textMode ? 'text start' : starts.length ? 'first recording start' : 'session start') + '. ' + (textMode ? 'Notes are' : 'Speech and notes are') + ' verbatim.', '', '## Screens');
+    if (scenes.some(function (scene) { return supportedAnnotations(scene).some(function (mark) { return !mark.hidden; }); })) lines.push('Coordinates: px, top-left (0,0). Snn#n is a mark number on the image.');
+    if (!scenes.length) lines.push('No screens captured.');
     scenes.forEach(function (scene) {
       var label = sceneRef(scene.id), names = [inline(scene.title), inline(scene.app), inline(scene.source && scene.source.title)].filter(Boolean);
-      var title = Array.from(new Set(names)).join(' · '), dimensions = scene.width > 0 && scene.height > 0 ? scene.width + '×' + scene.height + ' px' : '크기 미상';
+      var title = Array.from(new Set(names)).join(' · '), dimensions = scene.width > 0 && scene.height > 0 ? scene.width + '×' + scene.height + ' px' : 'size unknown';
       lines.push('- ' + label + ': `images/' + label + '.png` · ' + title + (title ? ' · ' : '') + dimensions);
       supportedAnnotations(scene).forEach(function (mark, index) { if (!mark.hidden) lines.push('  ' + label + '#' + (index + 1) + ' ' + geometry(scene, mark)); });
-      add(typeof scene.capturedAt === 'number' ? milliseconds(scene.capturedAt * 1000) : null, '캡처 ' + label, 0);
-      if (clean(scene.note)) notes.push('메모 (' + label + '): ' + quote(scene.note));
+      add(typeof scene.capturedAt === 'number' ? milliseconds(scene.capturedAt * 1000) : null, 'Capture ' + label, 0);
+      if (clean(scene.note)) notes.push('Note (' + label + '): ' + quote(scene.note));
     });
-    if (clean(session.notes)) notes.push('전체 메모: ' + quote(session.notes));
+    if (clean(session.notes)) notes.push('General note: ' + quote(session.notes));
 
     var contexts = [], seenContexts = new Set();
     function collectContext(context, audio) {
@@ -186,8 +186,8 @@
     }
     recordings.forEach(function (audio, index) {
       var label = 'A' + (index + 1), start = milliseconds(audio.startMs), end = milliseconds(audio.endMs);
-      if (start !== null) add(start, '녹음 ' + label + ' 시작', 0);
-      if (end !== null) add(end, '녹음 ' + label + ' 끝', 4);
+      if (start !== null) add(start, 'Recording ' + label + ' start', 0);
+      if (end !== null) add(end, 'Recording ' + label + ' end', 4);
       (Array.isArray(audio.contexts) ? audio.contexts : []).forEach(function (context) { collectContext(context, audio); });
     });
     (Array.isArray(session.sceneSelections) ? session.sceneSelections : []).forEach(function (context) { collectContext(context, {}); });
@@ -198,7 +198,7 @@
       var selection = context.sceneId + '/' + context.reference;
       if (hasPreviousSelection && selection === previousSelection) return;
       previousSelection = selection;hasPreviousSelection = true;
-      add(context.at, !context.sceneId || context.sceneId === 'unbound' ? '화면 선택 해제' : (context.reference.includes('#') ? '가리키기 ' : '화면 선택 ') + context.reference, 2);
+      add(context.at, !context.sceneId || context.sceneId === 'unbound' ? 'Screen deselected' : (context.reference.includes('#') ? 'Point to ' : 'Select screen ') + context.reference, 2);
     });
 
     transcript = transcript.slice().sort(function (a, b) {
@@ -207,7 +207,7 @@
     });
     var recordLabels = new Map(), itemLabels = new Map(), replacements = new Map();
     transcript.forEach(function (item, index) {
-      var label = (textMode || item.kind === 'note' ? '메모 ' : '말 ') + (index + 1);
+      var label = (textMode || item.kind === 'note' ? 'Note ' : 'Speech ') + (index + 1);
       itemLabels.set(item, label);
       if (clean(item.id)) recordLabels.set(item.id, label);
     });
@@ -218,25 +218,25 @@
       var candidateLabels = Array.from(new Set(candidates.map(function (context) { return targetRef(context.sceneId, targetID(context)); })));
       var mismatch = candidateScenes.length === 1 && candidateScenes[0] !== item.sceneId, uncertain = timingUncertain(item, start, end);
       var generalNote = (textMode || item.kind === 'note') && !item.sceneId && !candidates.length;
-      if (generalNote) reference = '전체 메모';
+      if (generalNote) reference = 'general note';
       // Old unresolved flags may describe removed drawing targets. Scene-only
       // candidates establish the screen without reviving that obsolete ambiguity.
-      if (!generalNote && (sceneRef(item.sceneId) === '화면?' || candidateScenes.length > 1 || mismatch || uncertain || (item.unresolved && !candidates.length))) flags.push('연결?');
-      if (uncertain) flags.push('시간?');
-      if (item.timingEstimated) flags.push('문장별 시각 없음 · 녹음 전체 구간');
-      if (item.timingAdjusted) flags.push('시각 보정');
+      if (!generalNote && (sceneRef(item.sceneId) === 'screen?' || candidateScenes.length > 1 || mismatch || uncertain || (item.unresolved && !candidates.length))) flags.push('link?');
+      if (uncertain) flags.push('time?');
+      if (item.timingEstimated) flags.push('no per-sentence times · whole recording span');
+      if (item.timingAdjusted) flags.push('time adjusted');
       var mark = linkedMark(item.sceneId, item.target);
-      if (mark && mark.hidden) flags.push('표시 지워짐');
-      if (candidateLabels.length > 1 || mismatch || (candidateLabels.length === 1 && candidateLabels[0] !== reference)) reference += '; 후보 ' + candidateLabels.join('/');
-      if (clean(item.replaces)) flags.push(recordLabels.has(item.replaces) ? recordLabels.get(item.replaces) + ' 정정' : '이전 기록 정정');
-      if (replacements.has(item.id)) flags.push(replacements.get(item.id) + '로 정정됨');
+      if (mark && mark.hidden) flags.push('mark removed');
+      if (candidateLabels.length > 1 || mismatch || (candidateLabels.length === 1 && candidateLabels[0] !== reference)) reference += '; candidates ' + candidateLabels.join('/');
+      if (clean(item.replaces)) flags.push(recordLabels.has(item.replaces) ? 'corrects ' + recordLabels.get(item.replaces) : 'corrects an earlier entry');
+      if (replacements.has(item.id)) flags.push('corrected by ' + replacements.get(item.id));
       add(start, itemLabels.get(item) + (flags.length ? ' [' + flags.join(' · ') + ']' : '') + ' (' + reference + '): ' + quote(item.text), 3, end !== null && start !== null && end >= start ? end : null);
     });
-    lines.push('', '## 타임라인');
+    lines.push('', '## Timeline');
     timeline.sort(function (a, b) { return a.at === null ? (b.at === null ? a.order - b.order : 1) : b.at === null ? -1 : a.at - b.at || a.rank - b.rank || a.order - b.order; });
-    if (!timeline.length) lines.push('기록 없음.');
+    if (!timeline.length) lines.push('No entries.');
     timeline.forEach(function (entry) { lines.push('[' + clock(entry.at) + (entry.end !== null && entry.end !== entry.at ? '–' + clock(entry.end) : '') + '] ' + entry.text); });
-    if (notes.length) lines.push('', '## 메모', '시각 미상.', notes.join('\n'));
+    if (notes.length) lines.push('', '## Notes', 'Time unknown.', notes.join('\n'));
 
     var estimated = [], interrupted = [], failed = [], pending = [];
     recordings.forEach(function (audio, index) {
@@ -246,13 +246,13 @@
       if (audio.transcriptionStatus === 'failed') failed.push(label);
       else if (audio.transcriptionStatus !== 'complete') pending.push(label);
     });
-    if (estimated.length) caveats.push(estimated.join(', ') + ': 음성 시각 추정.');
-    if (interrupted.length) caveats.push(interrupted.join(', ') + ': 입력 중단/길이 차이로 화면 연결 미확정.');
-    if (failed.length) caveats.push(failed.join(', ') + ': 전사 실패, 원음 보존.');
-    if (pending.length) caveats.push(pending.join(', ') + ': 전사 미완료, 원음 보존.');
-    if (!transcript.length && !notes.length) caveats.push((textMode ? '메모' : '발화·메모') + ' 없음. 화면만으로 요청을 만들지 마세요.');
-    if (caveats.length) lines.push('', '## 확인 필요', caveats.map(function (text) { return '- ' + text; }).join('\n'));
-    lines.push('', '세부 기록: `session.json`.');
+    if (estimated.length) caveats.push(estimated.join(', ') + ': audio timing estimated.');
+    if (interrupted.length) caveats.push(interrupted.join(', ') + ': input interrupted or length mismatch; screen links unconfirmed.');
+    if (failed.length) caveats.push(failed.join(', ') + ': transcription failed; original audio kept.');
+    if (pending.length) caveats.push(pending.join(', ') + ': transcription incomplete; original audio kept.');
+    if (!transcript.length && !notes.length) caveats.push((textMode ? 'No notes.' : 'No speech or notes.') + ' Do not infer requests from screens alone.');
+    if (caveats.length) lines.push('', '## Caveats', caveats.map(function (text) { return '- ' + text; }).join('\n'));
+    lines.push('', 'Full record: `session.json`.');
     return lines.join('\n');
   }
 

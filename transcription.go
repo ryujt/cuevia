@@ -69,7 +69,7 @@ func NewTranscriber(config TranscriberConfig) *Transcriber {
 	s := &Transcriber{config: config}
 	cache, err := os.UserCacheDir()
 	if err != nil && (config.BinaryPath == "" || config.ModelPath == "" || config.JobsDir == "") {
-		s.err = fmt.Errorf("음성 전사 캐시 경로를 찾을 수 없습니다: %w", err)
+		s.err = fmt.Errorf("couldn't find the transcription cache path: %w", err)
 	}
 	root := filepath.Join(cache, "Cuevia", "prototype", "transcription")
 	if s.config.BinaryPath == "" {
@@ -88,7 +88,7 @@ func NewTranscriber(config TranscriberConfig) *Transcriber {
 		s.config.JobsDir = filepath.Join(root, "jobs")
 	}
 	if s.config.Language == "" {
-		s.config.Language = "ko"
+		s.config.Language = "en"
 	}
 	if s.config.Timeout <= 0 {
 		s.config.Timeout = 2 * time.Minute
@@ -116,20 +116,20 @@ func (s *Transcriber) checkReady() error {
 	}
 	binaryPath, err := exec.LookPath(s.config.BinaryPath)
 	if err != nil {
-		return errors.New("로컬 음성 전사 엔진이 없습니다. sh scripts/setup-transcription.sh를 실행하거나 CUEVIA_WHISPER_BIN을 설정해 주세요.")
+		return errors.New("The local transcription engine is missing. Run sh scripts/setup-transcription.sh or set CUEVIA_WHISPER_BIN.")
 	}
 	info, err := os.Stat(binaryPath)
 	if err != nil || !info.Mode().IsRegular() {
-		return errors.New("로컬 음성 전사 엔진을 실행할 수 없습니다. sh scripts/setup-transcription.sh를 다시 실행해 주세요.")
+		return errors.New("The local transcription engine can't be run. Run sh scripts/setup-transcription.sh again.")
 	}
 	model, err := os.Open(s.config.ModelPath)
 	if err != nil {
-		return errors.New("음성 전사 모델이 없습니다. sh scripts/setup-transcription.sh를 실행하거나 CUEVIA_WHISPER_MODEL을 설정해 주세요.")
+		return errors.New("The transcription model is missing. Run sh scripts/setup-transcription.sh or set CUEVIA_WHISPER_MODEL.")
 	}
 	defer model.Close()
 	info, err = model.Stat()
 	if err != nil || !info.Mode().IsRegular() || info.Size() == 0 {
-		return errors.New("음성 전사 모델이 올바르지 않습니다. sh scripts/setup-transcription.sh를 다시 실행해 주세요.")
+		return errors.New("The transcription model is invalid. Run sh scripts/setup-transcription.sh again.")
 	}
 	return nil
 }
@@ -152,7 +152,7 @@ func (s *Transcriber) Transcribe(parent context.Context, wavPath string) ([]Tran
 	case transcriptionCPU <- struct{}{}:
 		defer func() { <-transcriptionCPU }()
 	default:
-		return nil, &TranscriptionError{Kind: "busy", Err: errors.New("다른 음성 전사를 처리 중입니다. 잠시 후 다시 시도해 주세요.")}
+		return nil, &TranscriptionError{Kind: "busy", Err: errors.New("Another transcription is in progress. Please try again shortly.")}
 	}
 	ctx, cancel := context.WithTimeout(parent, s.config.Timeout)
 	defer cancel()
@@ -190,19 +190,19 @@ func (s *Transcriber) Transcribe(parent context.Context, wavPath string) ([]Tran
 		if ctx.Err() != nil {
 			return nil, &TranscriptionError{Kind: "canceled", Err: ctx.Err()}
 		}
-		return nil, &TranscriptionError{Kind: "failed", Err: fmt.Errorf("로컬 음성 전사에 실패했습니다: %w; %s", err, strings.TrimSpace(string(output.data)))}
+		return nil, &TranscriptionError{Kind: "failed", Err: fmt.Errorf("local transcription failed: %w; %s", err, strings.TrimSpace(string(output.data)))}
 	}
 	if err := ctx.Err(); err != nil {
 		return nil, &TranscriptionError{Kind: "canceled", Err: err}
 	}
 	file, err := os.Open(outputPath + ".json")
 	if err != nil {
-		return nil, &TranscriptionError{Kind: "failed", Err: errors.New("음성 전사 엔진이 결과를 만들지 못했습니다. 엔진과 모델 설정을 확인해 주세요.")}
+		return nil, &TranscriptionError{Kind: "failed", Err: errors.New("The transcription engine produced no result. Check the engine and model settings.")}
 	}
 	defer file.Close()
 	segments, err := parseWhisperJSON(io.LimitReader(file, 8*1024*1024+1), durationMs)
 	if err != nil {
-		return nil, &TranscriptionError{Kind: "failed", Err: fmt.Errorf("음성 전사 결과를 읽을 수 없습니다: %w", err)}
+		return nil, &TranscriptionError{Kind: "failed", Err: fmt.Errorf("couldn't read the transcription result: %w", err)}
 	}
 	return segments, nil
 }
@@ -302,49 +302,49 @@ func parseWhisperTimestamp(value string) (int64, error) {
 func validateTranscriptionWAV(path string) (durationMs int64, audible bool, resultErr error) {
 	file, err := os.Open(path)
 	if err != nil {
-		return 0, false, fmt.Errorf("음성 파일을 열 수 없습니다: %w", err)
+		return 0, false, fmt.Errorf("couldn't open the audio file: %w", err)
 	}
 	defer file.Close()
 	info, err := file.Stat()
 	if err != nil || !info.Mode().IsRegular() {
-		return 0, false, errors.New("올바른 WAV 음성 파일이 필요합니다.")
+		return 0, false, errors.New("A valid WAV audio file is required.")
 	}
 	var header [12]byte
 	if _, err := io.ReadFull(file, header[:]); err != nil || string(header[:4]) != "RIFF" || string(header[8:12]) != "WAVE" {
-		return 0, false, errors.New("16 kHz 모노 PCM16 WAV 음성만 전사할 수 있습니다.")
+		return 0, false, errors.New("Only 16 kHz mono PCM16 WAV audio can be transcribed.")
 	}
 	end := int64(binary.LittleEndian.Uint32(header[4:8])) + 8
 	if end != info.Size() || end < 44 || end > int64(MaxTranscriptionAudioDuration/time.Second)*32000+1024*1024 {
-		return 0, false, errors.New("WAV 파일 크기가 올바르지 않거나 5분 제한을 초과했습니다.")
+		return 0, false, errors.New("The WAV file size is invalid or exceeds the 5-minute limit.")
 	}
 	var foundFormat, foundData bool
 	var totalData int64
 	for position := int64(12); position < end; {
 		var chunk [8]byte
 		if _, err := io.ReadFull(file, chunk[:]); err != nil {
-			return 0, false, errors.New("WAV 청크가 손상되었습니다.")
+			return 0, false, errors.New("The WAV chunk is corrupted.")
 		}
 		size := int64(binary.LittleEndian.Uint32(chunk[4:8]))
 		position += 8
 		if size > end-position {
-			return 0, false, errors.New("WAV 음성 데이터가 잘렸습니다.")
+			return 0, false, errors.New("The WAV audio data is truncated.")
 		}
 		switch string(chunk[:4]) {
 		case "fmt ":
 			if foundFormat || size < 16 || size > 64 {
-				return 0, false, errors.New("WAV 음성 형식이 올바르지 않습니다.")
+				return 0, false, errors.New("The WAV audio format is invalid.")
 			}
 			format := make([]byte, size)
 			if _, err := io.ReadFull(file, format); err != nil {
 				return 0, false, err
 			}
 			if binary.LittleEndian.Uint16(format[0:2]) != 1 || binary.LittleEndian.Uint16(format[2:4]) != 1 || binary.LittleEndian.Uint32(format[4:8]) != 16000 || binary.LittleEndian.Uint32(format[8:12]) != 32000 || binary.LittleEndian.Uint16(format[12:14]) != 2 || binary.LittleEndian.Uint16(format[14:16]) != 16 {
-				return 0, false, errors.New("16 kHz 모노 PCM16 WAV 음성만 전사할 수 있습니다.")
+				return 0, false, errors.New("Only 16 kHz mono PCM16 WAV audio can be transcribed.")
 			}
 			foundFormat = true
 		case "data":
 			if foundData || size == 0 || size%2 != 0 {
-				return 0, false, errors.New("WAV 음성 데이터가 올바르지 않습니다.")
+				return 0, false, errors.New("The WAV audio data is invalid.")
 			}
 			foundData, totalData = true, size
 			buffer := make([]byte, 32*1024)
@@ -369,7 +369,7 @@ func validateTranscriptionWAV(path string) (durationMs int64, audible bool, resu
 		position += size
 		if size%2 != 0 {
 			if position >= end {
-				return 0, false, errors.New("WAV 청크 패딩이 없습니다.")
+				return 0, false, errors.New("The WAV chunk padding is missing.")
 			}
 			if _, err := file.Seek(1, io.SeekCurrent); err != nil {
 				return 0, false, err
@@ -378,7 +378,7 @@ func validateTranscriptionWAV(path string) (durationMs int64, audible bool, resu
 		}
 	}
 	if !foundFormat || !foundData || totalData > int64(MaxTranscriptionAudioDuration/time.Second)*32000 {
-		return 0, false, errors.New("WAV 음성이 없거나 5분 제한을 초과했습니다.")
+		return 0, false, errors.New("The WAV has no audio or exceeds the 5-minute limit.")
 	}
 	return totalData * 1000 / 32000, audible, nil
 }

@@ -258,7 +258,7 @@ func runAppWithReadyFile(parent context.Context, addr string, webOnly bool, read
 		if permissionErr != nil || !allowed {
 			bridge.busy.Store(false)
 			bridge.activity.add("failed", "")
-			_ = platformShowCaptureError("화면 캡처 권한이 필요해요.\n시스템 설정 → 개인정보 보호 및 보안 → 화면 및 시스템 오디오 녹음에서 Cuevia를 허용한 뒤 앱을 다시 실행해주세요.")
+			_ = platformShowCaptureError("Cuevia needs Screen Recording permission.\nAllow Cuevia in System Settings → Privacy & Security → Screen & System Audio Recording, then relaunch the app.")
 			return
 		}
 		bridge.activity.add("selecting", "")
@@ -283,13 +283,13 @@ func runAppWithReadyFile(parent context.Context, addr string, webOnly bool, read
 			}
 			bridge.activity.add("captured", capture.ID)
 			if err := exec.CommandContext(ctx, "/usr/bin/open", "-a", "Google Chrome", baseURL+"/?capture="+capture.ID).Run(); err != nil {
-				log.Printf("Chrome 열기 실패: %v", err)
+				log.Printf("Failed to open Chrome: %v", err)
 			}
 		}()
 	}, func() {
 		go func() {
 			if err := exec.CommandContext(ctx, "/usr/bin/open", "-a", "Google Chrome", baseURL+"/?settings").Run(); err != nil {
-				log.Print("Cuevia 설정 화면을 열지 못했습니다.")
+				log.Print("Couldn't open Cuevia settings.")
 			}
 		}()
 	}, func() { bridge.nativeReady.Store(true) })

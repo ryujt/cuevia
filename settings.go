@@ -57,7 +57,7 @@ func newAppSettings(path, key, model string) (*AppSettings, error) {
 	}
 	s := &AppSettings{path: path, key: strings.TrimSpace(key), model: model, gate: make(chan struct{}, 1)}
 	s.newTranscriber = func(key, model string) audioTranscriber {
-		return NewOpenAITranscriber(OpenAITranscriberConfig{APIKey: key, Model: model, Language: "ko"})
+		return NewOpenAITranscriber(OpenAITranscriberConfig{APIKey: key, Model: model, Language: "en"})
 	}
 	s.current = s.newTranscriber(s.key, s.model)
 	return s, nil
@@ -102,7 +102,7 @@ func (s *AppSettings) Transcribe(ctx context.Context, path string) ([]Transcript
 	case s.gate <- struct{}{}:
 		defer func() { <-s.gate }()
 	default:
-		return nil, &TranscriptionError{Kind: "busy", Err: errors.New("음성을 전사 중입니다. 완료 후 다시 시도해 주세요.")}
+		return nil, &TranscriptionError{Kind: "busy", Err: errors.New("Transcription is in progress. Please try again when it finishes.")}
 	}
 	s.mu.RLock()
 	current := s.current

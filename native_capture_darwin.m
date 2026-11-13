@@ -63,7 +63,7 @@ int cuevia_capture_selected(int kind,uint32_t display_id,uint32_t window_id,int 
    [SCShareableContent getShareableContentExcludingDesktopWindows:YES onScreenWindowsOnly:YES completionHandler:^(SCShareableContent *content,NSError *error){
     @autoreleasepool {
      if([result isAbandoned])return;
-     if(error||!content){[result completePNG:nil error:error?:cuevia_screenshot_error(-3901,@"화면 목록을 읽지 못했어요")];return;}
+     if(error||!content){[result completePNG:nil error:error?:cuevia_screenshot_error(-3901,@"Couldn't read the list of screens")];return;}
      SCContentFilter *filter=nil;
      size_t pixelsWide=0,pixelsHigh=0;
      if(kind==1) {
@@ -90,9 +90,9 @@ int cuevia_capture_selected(int kind,uint32_t display_id,uint32_t window_id,int 
        break;
       }
      }
-     if(!filter){[result completePNG:nil error:cuevia_screenshot_error(-3901,@"선택한 프로그램이나 모니터가 더 이상 없어요. 다시 선택해주세요")];return;}
+     if(!filter){[result completePNG:nil error:cuevia_screenshot_error(-3901,@"The selected app or monitor is no longer available. Please select again")];return;}
      if(pixelsWide==0||pixelsHigh==0||pixelsWide>32768||pixelsHigh>32768||pixelsWide*pixelsHigh>40000000){
-      [filter release];[result completePNG:nil error:cuevia_screenshot_error(-3901,@"캡처할 화면 크기를 확인하지 못했어요")];return;
+      [filter release];[result completePNG:nil error:cuevia_screenshot_error(-3901,@"Couldn't determine the size of the screen to capture")];return;
      }
      SCStreamConfiguration *config=[[SCStreamConfiguration alloc] init];
      config.width=pixelsWide;config.height=pixelsHigh;config.showsCursor=NO;
@@ -103,13 +103,13 @@ int cuevia_capture_selected(int kind,uint32_t display_id,uint32_t window_id,int 
      [SCScreenshotManager captureImageWithFilter:filter configuration:config completionHandler:^(CGImageRef image,NSError *captureError){
       @autoreleasepool {
        if([result isAbandoned])return;
-       if(captureError||!image){[result completePNG:nil error:captureError?:cuevia_screenshot_error(-3903,@"캡처 이미지가 비어 있어요")];return;}
+       if(captureError||!image){[result completePNG:nil error:captureError?:cuevia_screenshot_error(-3903,@"The captured image is empty")];return;}
        NSMutableData *data=[NSMutableData data];
        CGImageDestinationRef destination=CGImageDestinationCreateWithData((CFMutableDataRef)data,CFSTR("public.png"),1,NULL);
-       if(!destination){[result completePNG:nil error:cuevia_screenshot_error(-3903,@"PNG 저장을 준비하지 못했어요")];return;}
+       if(!destination){[result completePNG:nil error:cuevia_screenshot_error(-3903,@"Couldn't prepare to save the PNG")];return;}
        CGImageDestinationAddImage(destination,image,NULL);
        BOOL encoded=CGImageDestinationFinalize(destination);CFRelease(destination);
-       if(!encoded||data.length==0||data.length>(32u<<20)){[result completePNG:nil error:cuevia_screenshot_error(-3903,@"캡처 이미지를 PNG로 저장하지 못했어요")];return;}
+       if(!encoded||data.length==0||data.length>(32u<<20)){[result completePNG:nil error:cuevia_screenshot_error(-3903,@"Couldn't save the capture as PNG")];return;}
        [result completePNG:data error:nil];
       }
      }];
@@ -118,20 +118,20 @@ int cuevia_capture_selected(int kind,uint32_t display_id,uint32_t window_id,int 
    }];
    int bounded_ms=timeout_ms>0&&timeout_ms<30000?timeout_ms:30000;
    if(dispatch_semaphore_wait(result->completion,dispatch_time(DISPATCH_TIME_NOW,(int64_t)bounded_ms*NSEC_PER_MSEC))!=0){
-    [result abandon];[result release];*failure=strdup("화면 캡처 응답 시간이 초과됐어요. 다시 시도해주세요");return -3902;
+    [result abandon];[result release];*failure=strdup("Screen capture timed out. Please try again");return -3902;
    }
    [result->lock lock];
    int status=(int)result->code;
    if(status==0&&result->png.length>0){
     *output_size=result->png.length;*output=malloc(*output_size);
     if(*output)memcpy(*output,result->png.bytes,*output_size);
-    else {status=-3903;*output_size=0;*failure=strdup("캡처 이미지 메모리를 할당하지 못했어요");}
+    else {status=-3903;*output_size=0;*failure=strdup("Couldn't allocate memory for the captured image");}
    } else {
     status=status?:-3903;
-    *failure=strdup((result->message?:@"화면을 캡처하지 못했어요").UTF8String);
+    *failure=strdup((result->message?:@"Couldn't capture the screen").UTF8String);
    }
    [result->lock unlock];[result release];return status;
   }
  }
- *failure=strdup("화면 캡처는 macOS 14 이상에서 사용할 수 있어요");return -3900;
+ *failure=strdup("Screen capture requires macOS 14 or later");return -3900;
 }

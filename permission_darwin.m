@@ -25,9 +25,9 @@ int cuevia_show_capture_error(const char *message) {
   NSString *details=message?[NSString stringWithUTF8String:message]:nil;
   NSAlert *alert=[[NSAlert alloc] init];
   [alert setAlertStyle:NSAlertStyleWarning];
-  [alert setMessageText:@"화면을 캡처하지 못했어요"];
-  [alert setInformativeText:details.length?details:@"잠시 후 다시 시도해주세요."];
-  [alert addButtonWithTitle:@"확인"];
+  [alert setMessageText:@"Couldn't capture the screen"];
+  [alert setInformativeText:details.length?details:@"Please try again in a moment."];
+  [alert addButtonWithTitle:@"OK"];
   [app activateIgnoringOtherApps:YES];
   [[alert window] setLevel:NSFloatingWindowLevel];
   [alert runModal];

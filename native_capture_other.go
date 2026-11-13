@@ -11,5 +11,5 @@ func runSelectedScreenCapture(ctx context.Context, source CaptureSource, path st
 	if err := ctx.Err(); err != nil {
 		return nil, &CaptureError{Kind: CaptureCanceled, Err: err}
 	}
-	return nil, &CaptureError{Kind: CaptureUnavailable, Err: errors.New("ScreenCaptureKit 화면 캡처는 macOS 14 이상에서 사용할 수 있어요")}
+	return nil, &CaptureError{Kind: CaptureUnavailable, Err: errors.New("ScreenCaptureKit screen capture requires macOS 14 or later")}
 }

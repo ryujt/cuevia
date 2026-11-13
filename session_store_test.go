@@ -26,8 +26,8 @@ func sessionTestJSON(title string) json.RawMessage {
 	data, _ := json.Marshal(map[string]any{
 		"id": "session-real", "title": title, "duration": 1,
 		"scenes":     []any{map[string]any{"id": "scene-real", "captureId": strings.Repeat("a", 32), "width": 3, "height": 2, "source": map[string]any{"kind": "window", "app": "Google Chrome", "displayId": 2}}},
-		"transcript": []any{map[string]any{"id": "speech-real", "sceneId": "scene-real", "text": "실제 저장한 설명"}},
-		"prompt":     "# 실제 요청\n\n화면의 버튼을 바꿔주세요.\n\n## 화면\n- S01: `images/S01.png` · Google Chrome · 3×2 px\n\n세부 기록: `session.json`.",
+		"transcript": []any{map[string]any{"id": "speech-real", "sceneId": "scene-real", "text": "Actual saved description"}},
+		"prompt":     "# Actual request\n\nPlease change the button on the screen.\n\n## Screens\n- S01: `images/S01.png` · Google Chrome · 3×2 px\n\nFull record: `session.json`.",
 	})
 	return data
 }
@@ -94,8 +94,8 @@ func sessionTestStore(t *testing.T) (*SessionStore, string, []byte) {
 
 func TestSessionDurableMediaAndRevisionMaterials(t *testing.T) {
 	store, dir, original := sessionTestStore(t)
-	draft := json.RawMessage(`{"noteDraft":"아직 입력 중","sceneId":"scene-real","draftContext":{"targetId":"point-one"}}`)
-	saved, err := store.Save("session-real", 0, sessionTestJSON("처음 저장"), draft)
+	draft := json.RawMessage(`{"noteDraft":"Still typing","sceneId":"scene-real","draftContext":{"targetId":"point-one"}}`)
+	saved, err := store.Save("session-real", 0, sessionTestJSON("First save"), draft)
 	if err != nil || saved.Revision != 1 {
 		t.Fatalf("save = %#v, %v", saved, err)
 	}
@@ -172,7 +172,7 @@ func TestSessionDurableMediaAndRevisionMaterials(t *testing.T) {
 			t.Fatalf("agent prompt does not contain absolute material path: %q", file.Path)
 		}
 	}
-	if strings.Contains(materialized.Prompt, "`images/S01.png`") || !strings.Contains(materialized.Prompt, "- S01: [이미지 열기](<"+filepath.Join(materialized.Directory, "images", "S01.png")+">)") {
+	if strings.Contains(materialized.Prompt, "`images/S01.png`") || !strings.Contains(materialized.Prompt, "- S01: [Open image](<"+filepath.Join(materialized.Directory, "images", "S01.png")+">)") {
 		t.Fatalf("relative image reference was not rewritten: %s", materialized.Prompt)
 	}
 	idempotent, err := reopened.Materialize("session-real", 1)
@@ -187,11 +187,11 @@ func TestSessionDurableMediaAndRevisionMaterials(t *testing.T) {
 	if err != nil || idempotent.Directory != materialized.Directory || idempotent.CreatedAt != materialized.CreatedAt {
 		t.Fatalf("restart duplicated output: %#v, %v", idempotent, err)
 	}
-	stale, err := reopened.Save("session-real", 0, sessionTestJSON("덮어쓰면 안 됨"), nil)
+	stale, err := reopened.Save("session-real", 0, sessionTestJSON("Must not overwrite"), nil)
 	if !errors.Is(err, ErrSessionConflict) || stale.Revision != 1 {
 		t.Fatalf("stale save = %#v, %v", stale, err)
 	}
-	updated, err := reopened.Save("session-real", 1, sessionTestJSON("변경 저장"), draft)
+	updated, err := reopened.Save("session-real", 1, sessionTestJSON("Save changes"), draft)
 	if err != nil || updated.Revision != 2 || len(updated.Audio) != 1 {
 		t.Fatalf("update lost media = %#v, %v", updated, err)
 	}
@@ -211,7 +211,7 @@ func TestSessionDurableMediaAndRevisionMaterials(t *testing.T) {
 func TestSparseSelectedScenesMaterializeOriginalsWithoutLegacyFreehandOrHistory(t *testing.T) {
 	store, dir, original := sessionTestStore(t)
 	var document map[string]any
-	if err := json.Unmarshal(sessionTestJSON("선택한 화면"), &document); err != nil {
+	if err := json.Unmarshal(sessionTestJSON("Selected screens"), &document); err != nil {
 		t.Fatal(err)
 	}
 	scenes := []any{}
@@ -229,13 +229,13 @@ func TestSparseSelectedScenesMaterializeOriginalsWithoutLegacyFreehandOrHistory(
 	document["annotationHistoryVersion"], document["annotationEvents"] = 99, "legacy data retained without runtime validation"
 	document["future"] = map[string]any{"nested": []any{map[string]any{"targetDescription": "old coordinates", "annotations": []any{}, "keep": "saved", "targetLanguage": "ko", "annotationProvider": "future-provider", "counter": json.Number("9007199254740993")}}}
 	document["transcript"] = []any{
-		map[string]any{"id": "speech-nine", "sceneId": "scene-10", "text": "S09 요청", "target": map[string]any{"x": .5}, "context": map[string]any{"targetId": "legacy / unvalidated", "keep": "speech"}},
-		map[string]any{"id": "speech-ten", "sceneId": "scene-11", "text": "S10 요청", "targetId": "old-id"},
-		map[string]any{"id": "speech-unselected", "sceneId": "scene-03", "text": "다른 화면"},
+		map[string]any{"id": "speech-nine", "sceneId": "scene-10", "text": "S09 request", "target": map[string]any{"x": .5}, "context": map[string]any{"targetId": "legacy / unvalidated", "keep": "speech"}},
+		map[string]any{"id": "speech-ten", "sceneId": "scene-11", "text": "S10 request", "targetId": "old-id"},
+		map[string]any{"id": "speech-unselected", "sceneId": "scene-03", "text": "Another screen"},
 	}
-	document["prompt"] = "# 선택한 화면\n\nS09: images/S09.png\nS10: images/S10.png"
+	document["prompt"] = "# Selected screens\n\nS09: images/S09.png\nS10: images/S10.png"
 	raw := sessionTestMarshal(t, document)
-	draft := json.RawMessage(`{"draftContext":{"targetId":"legacy"},"noteDraft":"보존할 초안"}`)
+	draft := json.RawMessage(`{"draftContext":{"targetId":"legacy"},"noteDraft":"Draft to keep"}`)
 	if _, err := store.Save("session-real", 0, raw, draft); err != nil {
 		t.Fatal(err)
 	}
@@ -245,7 +245,7 @@ func TestSparseSelectedScenesMaterializeOriginalsWithoutLegacyFreehandOrHistory(
 	if err != nil {
 		t.Fatal(err)
 	}
-	transcription := json.RawMessage(`[{"startMs":0,"endMs":200,"text":"녹음 설명","targetId":"old","future":{"annotations":[{}],"keep":"transcription"}}]`)
+	transcription := json.RawMessage(`[{"startMs":0,"endMs":200,"text":"Recorded description","targetId":"old","future":{"annotations":[{}],"keep":"transcription"}}]`)
 	if _, err := store.SetAudioTranscription("session-real", audio.ID, transcription, "complete"); err != nil {
 		t.Fatal(err)
 	}
@@ -362,14 +362,14 @@ func TestSparseSelectedScenesMaterializeOriginalsWithoutLegacyFreehandOrHistory(
 	if err != nil || retry.Directory != materials.Directory || retry.Prompt != materials.Prompt {
 		t.Fatalf("sparse materialization was not idempotent: %+v %v", retry, err)
 	}
-	if _, err := reopened.Save("session-real", 1, sessionTestJSON("판서 없는 새 저장"), nil); err != nil {
+	if _, err := reopened.Save("session-real", 1, sessionTestJSON("New save without drawings"), nil); err != nil {
 		t.Fatalf("removed append-only drawing rules blocked an ordinary save: %v", err)
 	}
 }
 
 func TestMaterializationSkipsLegacyOutputWithoutChangingIt(t *testing.T) {
 	store, _, _ := sessionTestStore(t)
-	if _, err := store.Save("session-real", 0, sessionTestJSON("이전 출력 보존"), nil); err != nil {
+	if _, err := store.Save("session-real", 0, sessionTestJSON("Keep previous output"), nil); err != nil {
 		t.Fatal(err)
 	}
 	old, err := store.Materialize("session-real", 1)
@@ -412,11 +412,11 @@ func TestMaterializedPromptLinksGeneratedReferencesWithoutChangingQuotedFilename
 		{Name: "images/S10.png", Path: "/tmp/request/images/S10.png"},
 		{Name: "audio/recording.wav", Path: "/tmp/request/audio/recording.wav"},
 	}
-	spoken := "[00:01.000] 말 1 (S09): “`images/S09.png`와 session.json이라는 글자를 바꿔주세요.”"
-	note := "- S09: `images/S09.png` 원문 메모의 파일명은 보존"
-	prompt := "# 기록\n\n## 화면\n- S09: `images/S09.png` · 브라우저 · 3008×3324 px\n- S10: `images/S10.png` · 설정 · 3008×3324 px\n\n## 타임라인\n" + spoken + "\n\n## 메모\n" + note + "\n세부 기록: `session.json`.\n\n세부 기록: `session.json`."
+	spoken := "[00:01.000] Speech 1 (S09): “Please change the words `images/S09.png` and session.json.”"
+	note := "- S09: `images/S09.png` file names in verbatim notes are kept"
+	prompt := "# Record\n\n## Screens\n- S09: `images/S09.png` · Browser · 3008×3324 px\n- S10: `images/S10.png` · Settings · 3008×3324 px\n\n## Timeline\n" + spoken + "\n\n## Notes\n" + note + "\nFull record: `session.json`.\n\nFull record: `session.json`."
 	actual := materializedPrompt(prompt, files)
-	if !strings.Contains(actual, spoken) || !strings.Contains(actual, note) || strings.Count(actual, "세부 기록: `session.json`.") != 1 {
+	if !strings.Contains(actual, spoken) || !strings.Contains(actual, note) || strings.Count(actual, "Full record: `session.json`.") != 1 {
 		t.Fatalf("raw filenames in speech or notes were rewritten: %s", actual)
 	}
 	for _, file := range files[1:4] {
@@ -424,10 +424,10 @@ func TestMaterializedPromptLinksGeneratedReferencesWithoutChangingQuotedFilename
 			t.Fatalf("generated reference was duplicated or missing for %s: %s", file.Name, actual)
 		}
 	}
-	if strings.Contains(actual, "## 상세 자료") || strings.Contains(actual, "## 이미지") || strings.Contains(actual, files[4].Path) {
+	if strings.Contains(actual, "## Supporting files") || strings.Contains(actual, "## Images") || strings.Contains(actual, files[4].Path) {
 		t.Fatalf("generated prompt gained redundant detail sections: %s", actual)
 	}
-	legacy := "# 이전 기록\n\n발화 원문: images/S09.png와 `session.json`을 읽어주세요."
+	legacy := "# Earlier record\n\nVerbatim speech: please read images/S09.png and `session.json`."
 	fallback := materializedPrompt(legacy, files)
 	if !strings.HasPrefix(fallback, legacy) || strings.Count(fallback, files[2].Path) != 1 || strings.Count(fallback, files[3].Path) != 1 {
 		t.Fatalf("legacy prompt did not preserve raw filenames with fallback image links: %s", fallback)
@@ -436,7 +436,7 @@ func TestMaterializedPromptLinksGeneratedReferencesWithoutChangingQuotedFilename
 
 func TestMaterializationRejectsTraversalAndSymlinkDestinations(t *testing.T) {
 	store, dir, _ := sessionTestStore(t)
-	if _, err := store.Save("session-real", 0, sessionTestJSON("경로 보호"), nil); err != nil {
+	if _, err := store.Save("session-real", 0, sessionTestJSON("Path protection"), nil); err != nil {
 		t.Fatal(err)
 	}
 	for _, invalidID := range []string{"../outside", "/tmp/outside", "session-real/.."} {
@@ -489,7 +489,7 @@ func TestMaterializationRejectsTraversalAndSymlinkDestinations(t *testing.T) {
 
 func TestMaterializedRequestSevenDayLifecycle(t *testing.T) {
 	store, _, _ := sessionTestStore(t)
-	if _, err := store.Save("session-real", 0, sessionTestJSON("자동 삭제"), nil); err != nil {
+	if _, err := store.Save("session-real", 0, sessionTestJSON("Auto delete"), nil); err != nil {
 		t.Fatal(err)
 	}
 	materials, err := store.Materialize("session-real", 1)
@@ -618,7 +618,7 @@ func TestSessionHTTPValidationAndMaterials(t *testing.T) {
 
 func TestAudioTranscriptionSurvivesBrowserAndProcess(t *testing.T) {
 	store, dir, _ := sessionTestStore(t)
-	if _, err := store.Save("session-real", 0, sessionTestJSON("전사 저장"), nil); err != nil {
+	if _, err := store.Save("session-real", 0, sessionTestJSON("Save transcription"), nil); err != nil {
 		t.Fatal(err)
 	}
 	contexts := json.RawMessage(`[{"tMs":1234.5,"sceneId":"scene-real","targetId":"point-one","sampleOffset":0}]`)
@@ -626,7 +626,7 @@ func TestAudioTranscriptionSurvivesBrowserAndProcess(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	segments := json.RawMessage(`[{"startMs":0,"endMs":200,"text":"가리킨 버튼을 옮겨주세요."}]`)
+	segments := json.RawMessage(`[{"startMs":0,"endMs":200,"text":"Please move the button I pointed to."}]`)
 	if _, err := store.SetAudioTranscription("session-real", audio.ID, segments, "complete"); err != nil {
 		t.Fatal(err)
 	}
@@ -638,7 +638,7 @@ func TestAudioTranscriptionSurvivesBrowserAndProcess(t *testing.T) {
 	if err != nil || len(loaded.Audio) != 1 || loaded.Audio[0].TranscriptionStatus != "complete" || !bytes.Equal(loaded.Audio[0].Transcription, segments) || !bytes.Equal(loaded.Audio[0].Contexts, contexts) || loaded.Revision != 1 {
 		t.Fatalf("ASR result lost after reopening: %#v, %v", loaded, err)
 	}
-	if _, err := reopened.Save("session-real", 1, sessionTestJSON("다른 탭 저장"), nil); err != nil {
+	if _, err := reopened.Save("session-real", 1, sessionTestJSON("Save from another tab"), nil); err != nil {
 		t.Fatal(err)
 	}
 	loaded, err = reopened.Get("session-real")
@@ -654,7 +654,7 @@ func TestAudioTranscriptionSurvivesBrowserAndProcess(t *testing.T) {
 
 func TestAudioTimingMetadataSurvivesASRRestartAndMaterials(t *testing.T) {
 	store, dir, _ := sessionTestStore(t)
-	if _, err := store.Save("session-real", 0, sessionTestJSON("녹음 타이밍"), nil); err != nil {
+	if _, err := store.Save("session-real", 0, sessionTestJSON("Recording timing"), nil); err != nil {
 		t.Fatal(err)
 	}
 	contexts := json.RawMessage(`[{"tMs":1234.5,"sceneId":"scene-real","targetId":null,"sampleOffset":0}]`)
@@ -671,7 +671,7 @@ func TestAudioTimingMetadataSurvivesASRRestartAndMaterials(t *testing.T) {
 	if _, err := store.StoreAudioWithMetadata("session-real", "recording-timing", 1234, 1434, sessionTestWAV(), contexts, changedMetadata); !errors.Is(err, ErrSessionConflict) {
 		t.Fatalf("recording timing was silently replaced: %v", err)
 	}
-	if _, err := store.SetAudioTranscription("session-real", audio.ID, json.RawMessage(`[{"startMs":0,"endMs":180,"text":"위치 설명"}]`), "complete"); err != nil {
+	if _, err := store.SetAudioTranscription("session-real", audio.ID, json.RawMessage(`[{"startMs":0,"endMs":180,"text":"Position description"}]`), "complete"); err != nil {
 		t.Fatal(err)
 	}
 	reopened, err := NewSessionStore(filepath.Join(dir, "sessions"))
@@ -682,7 +682,7 @@ func TestAudioTimingMetadataSurvivesASRRestartAndMaterials(t *testing.T) {
 	if err != nil || len(loaded.Audio) != 1 || !bytes.Equal(loaded.Audio[0].Metadata, metadata) || loaded.Audio[0].TranscriptionStatus != "complete" {
 		t.Fatalf("timing metadata lost after ASR/restart: %#v, %v", loaded, err)
 	}
-	if _, err := reopened.Save("session-real", 1, sessionTestJSON("다른 탭 저장"), nil); err != nil {
+	if _, err := reopened.Save("session-real", 1, sessionTestJSON("Save from another tab"), nil); err != nil {
 		t.Fatal(err)
 	}
 	materials, err := reopened.Materialize("session-real", 2)
@@ -747,13 +747,13 @@ func TestSessionProcessReload(t *testing.T) {
 			t.Fatal(err)
 		}
 		value, err := store.Current()
-		if err != nil || value.Revision != 1 || len(value.Audio) != 1 || !bytes.Contains(value.Session, []byte("새 프로세스")) || !bytes.Contains(value.Draft, []byte("미완성")) || !bytes.Contains(value.Audio[0].Metadata, []byte(`"timing":"estimated"`)) {
+		if err != nil || value.Revision != 1 || len(value.Audio) != 1 || !bytes.Contains(value.Session, []byte("New process")) || !bytes.Contains(value.Draft, []byte("Unfinished")) || !bytes.Contains(value.Audio[0].Metadata, []byte(`"timing":"estimated"`)) {
 			t.Fatalf("new process restore = %#v, %v", value, err)
 		}
 		return
 	}
 	store, _, _ := sessionTestStore(t)
-	if _, err := store.Save("session-real", 0, sessionTestJSON("새 프로세스"), json.RawMessage(`{"noteDraft":"미완성"}`)); err != nil {
+	if _, err := store.Save("session-real", 0, sessionTestJSON("New process"), json.RawMessage(`{"noteDraft":"Unfinished"}`)); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := store.StoreAudioWithMetadata("session-real", "recording-one", 0, 200, sessionTestWAV(), nil, json.RawMessage(`{"timing":"estimated","startRequestMs":0,"startUncertaintyMs":0,"discontinuities":[]}`)); err != nil {

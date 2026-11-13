@@ -35,7 +35,7 @@ func TestOpenAITranscriberMultipartAndActualTimestamps(t *testing.T) {
 			return
 		}
 		defer r.MultipartForm.RemoveAll()
-		for field, expected := range map[string]string{"model": "whisper-1", "response_format": "verbose_json", "timestamp_granularities[]": "segment", "language": "ko"} {
+		for field, expected := range map[string]string{"model": "whisper-1", "response_format": "verbose_json", "timestamp_granularities[]": "segment", "language": "en"} {
 			if r.FormValue(field) != expected {
 				t.Errorf("wrong %s field", field)
 			}
@@ -55,16 +55,16 @@ func TestOpenAITranscriberMultipartAndActualTimestamps(t *testing.T) {
 			t.Error("uploaded WAV changed or leaked a local filename")
 		}
 		w.Header().Set("Content-Type", "application/json")
-		_, _ = io.WriteString(w, `{"text":"첫 문장 다음 문장","segments":[{"start":0.0125,"end":0.3145,"text":" 첫 문장 "},{"start":0.315,"end":0.999,"text":"다음 문장"}]}`)
+		_, _ = io.WriteString(w, `{"text":"First sentence next sentence","segments":[{"start":0.0125,"end":0.3145,"text":" First sentence "},{"start":0.315,"end":0.999,"text":"Next sentence"}]}`)
 	}))
 	defer server.Close()
 	s := NewOpenAITranscriber(OpenAITranscriberConfig{APIKey: "fake-test-key", Endpoint: server.URL + "/v1/audio/transcriptions"})
 	status := s.Status()
-	if !status.Ready || status.Engine != "OpenAI" || status.Model != "whisper-1" || status.Language != "ko" || s.client.Timeout != 2*time.Minute {
+	if !status.Ready || status.Engine != "OpenAI" || status.Model != "whisper-1" || status.Language != "en" || s.client.Timeout != 2*time.Minute {
 		t.Fatalf("provider status/default timeout is incorrect: %+v", status)
 	}
 	segments, err := s.Transcribe(context.Background(), wavPath)
-	if err != nil || len(segments) != 2 || segments[0].StartMs != 13 || segments[0].EndMs != 315 || segments[0].Text != "첫 문장" || segments[1].StartMs != 315 || segments[1].EndMs != 999 {
+	if err != nil || len(segments) != 2 || segments[0].StartMs != 13 || segments[0].EndMs != 315 || segments[0].Text != "First sentence" || segments[1].StartMs != 315 || segments[1].EndMs != 999 {
 		t.Fatalf("seconds-to-ms mapping: %+v err=%v", segments, err)
 	}
 	if requests.Load() != 1 {
@@ -85,10 +85,10 @@ func TestOpenAIGPTTranscriptionUsesJSONAndRecordingInterval(t *testing.T) {
 					return
 				}
 				defer r.MultipartForm.RemoveAll()
-				if r.FormValue("model") != model || r.FormValue("response_format") != "json" || r.FormValue("language") != "ko" || r.FormValue("timestamp_granularities[]") != "" || len(r.MultipartForm.Value) != 3 {
+				if r.FormValue("model") != model || r.FormValue("response_format") != "json" || r.FormValue("language") != "en" || r.FormValue("timestamp_granularities[]") != "" || len(r.MultipartForm.Value) != 3 {
 					t.Error("unsupported GPT transcription fields")
 				}
-				_, _ = io.WriteString(w, `{"text":" 전체 녹음의 한 문장. 다음 문장. "}`)
+				_, _ = io.WriteString(w, `{"text":" One sentence from the whole recording. Next sentence. "}`)
 			}))
 			defer server.Close()
 			s := NewOpenAITranscriber(OpenAITranscriberConfig{APIKey: "fake-test-key", Model: model, Endpoint: server.URL})
@@ -98,7 +98,7 @@ func TestOpenAIGPTTranscriptionUsesJSONAndRecordingInterval(t *testing.T) {
 			path := testTranscriptionWAV(t, true)
 			duration, _, _ := validateTranscriptionWAV(path)
 			segments, err := s.Transcribe(context.Background(), path)
-			if err != nil || len(segments) != 1 || segments[0].StartMs != 0 || segments[0].EndMs != duration || !segments[0].TimingEstimated || segments[0].Text != "전체 녹음의 한 문장. 다음 문장." {
+			if err != nil || len(segments) != 1 || segments[0].StartMs != 0 || segments[0].EndMs != duration || !segments[0].TimingEstimated || segments[0].Text != "One sentence from the whole recording. Next sentence." {
 				t.Fatal("GPT text was given invented timestamps or split")
 			}
 		})
@@ -201,7 +201,7 @@ func TestOpenAITranscriberPreventsConcurrentPaidDuplicates(t *testing.T) {
 		_, _ = io.Copy(io.Discard, r.Body)
 		close(entered)
 		<-release
-		_, _ = io.WriteString(w, `{"text":"설명","segments":[{"start":0,"end":0.8,"text":"설명"}]}`)
+		_, _ = io.WriteString(w, `{"text":"Description","segments":[{"start":0,"end":0.8,"text":"Description"}]}`)
 	}))
 	defer server.Close()
 	s := NewOpenAITranscriber(OpenAITranscriberConfig{APIKey: "fake-secret", Endpoint: server.URL})
@@ -306,7 +306,7 @@ func TestOpenAINumericDiagnosticExcludesTranscriptAndSecrets(t *testing.T) {
 }
 
 func TestOpenAIObservedProviderPaddingIntersectsActualPCM(t *testing.T) {
-	const observed = `{"duration":5.0900001526,"text":"첫 문장 다음 문장","segments":[{"start":0,"end":2.55999994,"text":"첫 문장"},{"start":2.55999994,"end":5.55999994,"text":"다음 문장"}]}`
+	const observed = `{"duration":5.0900001526,"text":"First sentence next sentence","segments":[{"start":0,"end":2.55999994,"text":"First sentence"},{"start":2.55999994,"end":5.55999994,"text":"Next sentence"}]}`
 	segments, err := parseOpenAITranscription([]byte(observed), 5098)
 	if err != nil || len(segments) != 2 {
 		t.Fatalf("observed whisper-1 padding was rejected: %+v err=%v", segments, err)
@@ -364,9 +364,9 @@ func TestOpenAIRealTranscription(t *testing.T) {
 		}
 		return response, nil
 	})}
-	s := NewOpenAITranscriber(OpenAITranscriberConfig{APIKey: key, Model: "whisper-1", Language: "ko", Client: client})
+	s := NewOpenAITranscriber(OpenAITranscriberConfig{APIKey: key, Model: "whisper-1", Language: "en", Client: client})
 	store, _, _ := sessionTestStore(t)
-	if _, err := store.Save("session-real", 0, sessionTestJSON("OpenAI HTTP 전사 검증"), nil); err != nil {
+	if _, err := store.Save("session-real", 0, sessionTestJSON("OpenAI HTTP transcription check"), nil); err != nil {
 		t.Fatal("could not create the isolated verification session")
 	}
 	audio, err := store.StoreAudioWithContexts("session-real", "openai-spoken-fixture", 1200, 1200+duration, wavBytes, json.RawMessage(`[{"tMs":1200,"sampleOffset":0,"sceneId":"scene-real","targetId":"point-one"}]`))

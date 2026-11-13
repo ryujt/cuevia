@@ -55,10 +55,10 @@ func (s *CaptureService) CaptureSelected(ctx context.Context, id string, expecte
 		}
 	}
 	if chosen == nil {
-		return Capture{}, &CaptureError{Kind: CaptureFailed, Err: errors.New("선택한 프로그램이나 모니터가 더 이상 없어요")}
+		return Capture{}, &CaptureError{Kind: CaptureFailed, Err: errors.New("The selected app or monitor is no longer available")}
 	}
 	if len(expectedPID) > 0 && expectedPID[0] > 0 && chosen.PID != expectedPID[0] {
-		return Capture{}, &CaptureError{Kind: CaptureFailed, Err: errors.New("프로그램 실행 상태가 바뀌었어요. 다시 선택해주세요")}
+		return Capture{}, &CaptureError{Kind: CaptureFailed, Err: errors.New("The app's state has changed. Please select it again")}
 	}
 	runner := func(ctx context.Context, path string) ([]byte, error) {
 		return runSelectedScreenCapture(ctx, *chosen, path)

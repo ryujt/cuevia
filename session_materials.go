@@ -455,7 +455,7 @@ func materializedPrompt(prompt string, files []MaterializedFile) string {
 	lines := strings.Split(strings.TrimSpace(prompt), "\n")
 	screenStart, screenEnd := -1, len(lines)
 	for index, line := range lines {
-		if line == "## 화면" {
+		if line == "## Screens" {
 			screenStart = index + 1
 			break
 		}
@@ -468,14 +468,14 @@ func materializedPrompt(prompt string, files []MaterializedFile) string {
 			}
 		}
 	}
-	footer := "세부 기록: `session.json`."
+	footer := "Full record: `session.json`."
 	hasFooter := len(lines) > 0 && lines[len(lines)-1] == footer
 	audioIndex := 0
 	for _, file := range files {
 		isImage := strings.HasPrefix(file.Name, "images/")
 		link := "[" + file.Name + "](<" + file.Path + ">)"
 		if isImage {
-			link = "[이미지 열기](<" + file.Path + ">)"
+			link = "[Open image](<" + file.Path + ">)"
 			alias := strings.TrimSuffix(strings.TrimPrefix(file.Name, "images/"), ".png")
 			token := "- " + alias + ": `" + file.Name + "`"
 			replaced := false
@@ -494,22 +494,22 @@ func materializedPrompt(prompt string, files []MaterializedFile) string {
 		}
 		if file.Name == "session.json" {
 			if hasFooter {
-				lines[len(lines)-1] = "세부 기록: " + link + "."
+				lines[len(lines)-1] = "Full record: " + link + "."
 			} else {
 				details = append(details, "- "+link)
 			}
 		} else if !hasFooter && strings.HasPrefix(file.Name, "audio/") {
 			audioIndex++
-			details = append(details, fmt.Sprintf("- 원음 %d: [듣기](<%s>)", audioIndex, file.Path))
+			details = append(details, fmt.Sprintf("- Original audio %d: [Listen](<%s>)", audioIndex, file.Path))
 		}
 	}
 	var text strings.Builder
 	text.WriteString(strings.Join(lines, "\n"))
 	if len(fallbackImages) > 0 {
-		text.WriteString("\n\n## 이미지\n" + strings.Join(fallbackImages, "\n"))
+		text.WriteString("\n\n## Images\n" + strings.Join(fallbackImages, "\n"))
 	}
 	if len(details) > 0 {
-		text.WriteString("\n\n## 상세 자료\n필요할 때 세션 기록과 원음을 확인하세요.\n" + strings.Join(details, "\n"))
+		text.WriteString("\n\n## Supporting files\nCheck the session record and original audio when needed.\n" + strings.Join(details, "\n"))
 	}
 	text.WriteString("\n")
 	return text.String()

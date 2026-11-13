@@ -27,7 +27,7 @@ func originalAudioTestStore(t *testing.T) *SessionStore {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := store.Save("original-session", 0, json.RawMessage(`{"id":"original-session","title":"실제 원음","scenes":[],"transcript":[]}`), nil); err != nil {
+	if _, err := store.Save("original-session", 0, json.RawMessage(`{"id":"original-session","title":"Real original audio","scenes":[],"transcript":[]}`), nil); err != nil {
 		t.Fatal(err)
 	}
 	return store
@@ -322,11 +322,11 @@ func TestOriginalAudioHTTPRejectsCrossOriginWrongTypeAndOversize(t *testing.T) {
 
 func TestOriginalAudioMetadataRetrySurvivesEscapingAndObjectKeyOrder(t *testing.T) {
 	store := originalAudioTestStore(t)
-	first, err := store.StoreOriginalAudio("original-session", "recording-escaped", originalAudioTestWebM(), json.RawMessage(`{"label":"<설명>&","nested":{"b":2,"a":1},"startMs":9007199254740991}`))
+	first, err := store.StoreOriginalAudio("original-session", "recording-escaped", originalAudioTestWebM(), json.RawMessage(`{"label":"<description>&","nested":{"b":2,"a":1},"startMs":9007199254740991}`))
 	if err != nil {
 		t.Fatal(err)
 	}
-	replayed, err := store.StoreOriginalAudio("original-session", "recording-escaped", originalAudioTestWebM(), json.RawMessage(`{"startMs":9007199254740991,"nested":{"a":1,"b":2},"label":"\u003c설명\u003e\u0026"}`))
+	replayed, err := store.StoreOriginalAudio("original-session", "recording-escaped", originalAudioTestWebM(), json.RawMessage(`{"startMs":9007199254740991,"nested":{"a":1,"b":2},"label":"\u003cdescription\u003e\u0026"}`))
 	if err != nil || first.SHA256 != replayed.SHA256 || !first.CreatedAt.Equal(replayed.CreatedAt) {
 		t.Fatalf("semantic metadata retry failed: %+v %v", replayed, err)
 	}

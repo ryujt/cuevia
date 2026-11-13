@@ -57,16 +57,16 @@ int cuevia_install_menu(void) {
   [[cuevia_status_item button] setImage:image];
   [[cuevia_status_item button] setToolTip:@"Cuevia · ⌘⌃S"];
   NSMenu *menu=[[NSMenu alloc] initWithTitle:@"Cuevia"];
-  NSMenuItem *capture=[[NSMenuItem alloc] initWithTitle:@"화면 캡처…" action:@selector(capture:) keyEquivalent:@""];
+  NSMenuItem *capture=[[NSMenuItem alloc] initWithTitle:@"Capture screen…" action:@selector(capture:) keyEquivalent:@""];
   [capture setTarget:cuevia_status_controller];
   [menu addItem:capture];
   [capture release];
-  NSMenuItem *settings=[[NSMenuItem alloc] initWithTitle:@"설정…" action:@selector(settings:) keyEquivalent:@""];
+  NSMenuItem *settings=[[NSMenuItem alloc] initWithTitle:@"Settings…" action:@selector(settings:) keyEquivalent:@""];
   [settings setTarget:cuevia_status_controller];
   [menu addItem:settings];
   [settings release];
   [menu addItem:[NSMenuItem separatorItem]];
-  NSMenuItem *quit=[[NSMenuItem alloc] initWithTitle:@"종료" action:@selector(quit:) keyEquivalent:@""];
+  NSMenuItem *quit=[[NSMenuItem alloc] initWithTitle:@"Quit" action:@selector(quit:) keyEquivalent:@""];
   [quit setTarget:cuevia_status_controller];
   [menu addItem:quit];
   [quit release];
@@ -221,7 +221,7 @@ static NSDictionary *cuevia_picker_diagnostic_point(NSView *view,CGFloat primary
   self.bordered=NO;self.buttonType=NSButtonTypeMomentaryPushIn;self.focusRingType=NSFocusRingTypeExterior;
   self.title=@"";
   self.toolTip=[NSString stringWithFormat:@"%@ · %@ × %@",source[@"name"],source[@"width"],source[@"height"]];
-  [self setAccessibilityLabel:[NSString stringWithFormat:@"%@, %@ × %@, 클릭하여 캡처",source[@"name"],source[@"width"],source[@"height"]]];
+  [self setAccessibilityLabel:[NSString stringWithFormat:@"%@, %@ × %@, click to capture",source[@"name"],source[@"width"],source[@"height"]]];
  }
  return self;
 }
@@ -256,14 +256,14 @@ static NSDictionary *cuevia_picker_diagnostic_point(NSView *view,CGFloat primary
   NSRect image=NSMakeRect(NSMidX(imageRect)-size.width*scale/2,NSMidY(imageRect)-size.height*scale/2,size.width*scale,size.height*scale);
   [preview drawInRect:image fromRect:NSZeroRect operation:NSCompositingOperationSourceOver fraction:1 respectFlipped:NO hints:nil];
  } else {
-  NSString *placeholder=loading?@"미리보기 불러오는 중…":@"미리보기 없이 캡처할 수 있어요";
+  NSString *placeholder=loading?@"Loading preview…":@"You can capture without a preview";
   NSDictionary *attributes=@{NSFontAttributeName:[NSFont systemFontOfSize:10],NSForegroundColorAttributeName:[NSColor colorWithWhite:1 alpha:0.55]};
   NSSize size=[placeholder sizeWithAttributes:attributes];
   [placeholder drawAtPoint:NSMakePoint(NSMidX(imageRect)-size.width/2,NSMidY(imageRect)-size.height/2) withAttributes:attributes];
  }
  NSMutableParagraphStyle *paragraph=[[[NSMutableParagraphStyle alloc] init] autorelease];paragraph.lineBreakMode=NSLineBreakByTruncatingTail;
  NSDictionary *nameAttributes=@{NSFontAttributeName:[NSFont systemFontOfSize:11 weight:NSFontWeightSemibold],NSForegroundColorAttributeName:NSColor.whiteColor,NSParagraphStyleAttributeName:paragraph};
- NSString *name=[NSString stringWithFormat:@"%@%@",source[@"name"], [source[@"main"] boolValue]?@" · 주 모니터":@""];
+ NSString *name=[NSString stringWithFormat:@"%@%@",source[@"name"], [source[@"main"] boolValue]?@" · Main":@""];
  [name drawInRect:NSMakeRect(14,29,box.size.width-28,17) withAttributes:nameAttributes];
  NSString *resolution=[NSString stringWithFormat:@"%@ × %@",source[@"width"],source[@"height"]];
  [resolution drawInRect:NSMakeRect(14,12,box.size.width-28,15) withAttributes:@{NSFontAttributeName:[NSFont monospacedDigitSystemFontOfSize:10 weight:NSFontWeightRegular],NSForegroundColorAttributeName:[NSColor colorWithWhite:1 alpha:0.6]}];
@@ -297,11 +297,11 @@ static NSTextField *cuevia_picker_label(NSString *text,CGFloat size,NSFontWeight
  surface=[[NSVisualEffectView alloc] initWithFrame:NSMakeRect(0,0,620,132)];surface.material=NSVisualEffectMaterialHUDWindow;surface.blendingMode=NSVisualEffectBlendingModeBehindWindow;surface.state=NSVisualEffectStateActive;
  surface.wantsLayer=YES;surface.layer.cornerRadius=15;surface.layer.masksToBounds=YES;surface.autoresizingMask=NSViewWidthSizable|NSViewHeightSizable;
  toolbar.contentView=surface;
- titleLabel=[cuevia_picker_label(@"화면 캡처",12,NSFontWeightSemibold) retain];[surface addSubview:titleLabel];
- cancelButton=[[NSButton buttonWithTitle:@"취소" target:self action:@selector(cancel:)] retain];cancelButton.bezelStyle=NSBezelStyleInline;cancelButton.font=[NSFont systemFontOfSize:11];cancelButton.keyEquivalent=@"\033";[surface addSubview:cancelButton];
- tabs=[[NSSegmentedControl alloc] initWithFrame:NSZeroRect];tabs.segmentCount=2;[tabs setLabel:@"어플리케이션 캡처" forSegment:0];[tabs setLabel:@"모니터 캡처" forSegment:1];tabs.selectedSegment=0;tabs.trackingMode=NSSegmentSwitchTrackingSelectOne;
- [tabs setWidth:289 forSegment:0];[tabs setWidth:289 forSegment:1];tabs.target=self;tabs.action=@selector(changeMode:);tabs.font=[NSFont systemFontOfSize:12];[tabs setAccessibilityLabel:@"캡처 방식"];[surface addSubview:tabs];
- hint=[cuevia_picker_label(@"창 위로 마우스를 옮긴 뒤 클릭하세요. Esc로 취소할 수 있어요.",11,NSFontWeightRegular) retain];hint.textColor=[NSColor colorWithWhite:1 alpha:0.7];[surface addSubview:hint];
+ titleLabel=[cuevia_picker_label(@"Capture screen",12,NSFontWeightSemibold) retain];[surface addSubview:titleLabel];
+ cancelButton=[[NSButton buttonWithTitle:@"Cancel" target:self action:@selector(cancel:)] retain];cancelButton.bezelStyle=NSBezelStyleInline;cancelButton.font=[NSFont systemFontOfSize:11];cancelButton.keyEquivalent=@"\033";[surface addSubview:cancelButton];
+ tabs=[[NSSegmentedControl alloc] initWithFrame:NSZeroRect];tabs.segmentCount=2;[tabs setLabel:@"Capture app" forSegment:0];[tabs setLabel:@"Capture monitor" forSegment:1];tabs.selectedSegment=0;tabs.trackingMode=NSSegmentSwitchTrackingSelectOne;
+ [tabs setWidth:289 forSegment:0];[tabs setWidth:289 forSegment:1];tabs.target=self;tabs.action=@selector(changeMode:);tabs.font=[NSFont systemFontOfSize:12];[tabs setAccessibilityLabel:@"Capture mode"];[surface addSubview:tabs];
+ hint=[cuevia_picker_label(@"Hover over a window and click. Press Esc to cancel.",11,NSFontWeightRegular) retain];hint.textColor=[NSColor colorWithWhite:1 alpha:0.7];[surface addSubview:hint];
  monitorScroll=[[NSScrollView alloc] initWithFrame:NSZeroRect];monitorScroll.drawsBackground=NO;monitorScroll.hasVerticalScroller=NO;monitorScroll.hasHorizontalScroller=YES;monitorScroll.autohidesScrollers=YES;monitorScroll.borderType=NSNoBorder;monitorScroll.hidden=YES;
  NSArray *monitors=[sources[@"monitors"] isKindOfClass:NSArray.class]?sources[@"monitors"]:@[];
  CGFloat cardWidth=270,gap=12,documentWidth=MAX(584,monitors.count*(cardWidth+gap)-gap);
@@ -311,7 +311,7 @@ static NSTextField *cuevia_picker_label(NSString *text,CGFloat size,NSFontWeight
   card.frame=NSMakeRect(monitors.count==1?(584-cardWidth)/2:index*(cardWidth+gap),4,cardWidth,180);
   card.target=self;card.action=@selector(captureMonitor:);[cards addObject:card];[document addSubview:card];[card release];
  }
- if(monitors.count==0){NSTextField *empty=cuevia_picker_label(@"사용할 수 있는 모니터가 없어요",12,NSFontWeightRegular);empty.frame=NSMakeRect(20,80,544,24);empty.alignment=NSTextAlignmentCenter;[document addSubview:empty];}
+ if(monitors.count==0){NSTextField *empty=cuevia_picker_label(@"No monitors available",12,NSFontWeightRegular);empty.frame=NSMakeRect(20,80,544,24);empty.alignment=NSTextAlignmentCenter;[document addSubview:empty];}
  monitorScroll.documentView=document;[document release];[surface addSubview:monitorScroll];
  for(NSScreen *screen in NSScreen.screens) {
   NSPanel *overlay=[[NSPanel alloc] initWithContentRect:screen.frame styleMask:NSWindowStyleMaskBorderless|NSWindowStyleMaskNonactivatingPanel backing:NSBackingStoreBuffered defer:NO];
@@ -353,7 +353,7 @@ static NSTextField *cuevia_picker_label(NSString *text,CGFloat size,NSFontWeight
   if(cards.count==0&&monitorScroll.documentView.subviews.count)[monitorScroll.documentView.subviews.firstObject setFrame:NSMakeRect(20,80,documentWidth-40,24)];
   monitorScroll.hasHorizontalScroller=total>innerWidth+0.5;
  }
- hint.stringValue=mode==0?@"창 위로 마우스를 옮긴 뒤 클릭하세요. Esc로 취소할 수 있어요.":@"캡처할 모니터를 클릭하세요. Esc로 취소할 수 있어요.";
+ hint.stringValue=mode==0?@"Hover over a window and click. Press Esc to cancel.":@"Click a monitor to capture. Press Esc to cancel.";
  hint.toolTip=nil;
  for(NSPanel *overlay in overlays){if(mode==0)[overlay orderFrontRegardless];else[overlay orderOut:nil];[overlay.contentView setNeedsDisplay:YES];}
  [toolbar orderFrontRegardless];
@@ -372,7 +372,7 @@ static NSTextField *cuevia_picker_label(NSString *text,CGFloat size,NSFontWeight
    if(window[(id)kCGWindowAlpha]&&[window[(id)kCGWindowAlpha] doubleValue]<=0)continue;
    CGRect bounds=CGRectZero;
    if(!CGRectMakeWithDictionaryRepresentation((CFDictionaryRef)window[(id)kCGWindowBounds],&bounds)||bounds.size.width<80||bounds.size.height<50||!CGRectContainsPoint(bounds,quartz))continue;
-   NSString *name=window[(id)kCGWindowOwnerName]?:@"어플리케이션";
+   NSString *name=window[(id)kCGWindowOwnerName]?:@"App";
    selected=@{@"id":[NSString stringWithFormat:@"window-%@",wid],@"kind":@"program",@"name":name,@"title":window[(id)kCGWindowName]?:@"",@"pid":pid,@"windowId":wid,@"width":@((int)bounds.size.width),@"height":@((int)bounds.size.height),@"x":@(bounds.origin.x),@"y":@(bounds.origin.y)};
    rectangle=NSMakeRect(bounds.origin.x,primaryTop-CGRectGetMaxY(bounds),bounds.size.width,bounds.size.height);break;
   }
@@ -380,7 +380,7 @@ static NSTextField *cuevia_picker_label(NSString *text,CGFloat size,NSFontWeight
  }
  BOOL changed=![(hoverSource[@"id"]?:@"") isEqualToString:(selected[@"id"]?:@"")]||!NSEqualRects(hoverRect,rectangle);
  if(changed){[hoverSource release];hoverSource=[selected copy];hoverRect=rectangle;for(NSPanel *overlay in overlays)[overlay.contentView setNeedsDisplay:YES];}
- hint.stringValue=hoverSource?[NSString stringWithFormat:@"%@ · PID %@ — 클릭하여 이 창 캡처",hoverSource[@"name"],hoverSource[@"pid"]]:@"창 위로 마우스를 옮긴 뒤 클릭하세요. Esc로 취소할 수 있어요.";
+ hint.stringValue=hoverSource?[NSString stringWithFormat:@"%@ · PID %@ — click to capture this window",hoverSource[@"name"],hoverSource[@"pid"]]:@"Hover over a window and click. Press Esc to cancel.";
  hint.toolTip=hoverSource[@"title"];
 }
 - (void)captureWindowAtPointer {

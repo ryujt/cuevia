@@ -67,9 +67,9 @@ test('supported source numbers match the overlay contract while hidden and legac
   const input = scene([
     {id: 'pen-before', type: 'pen', points: [{x: .1, y: .1}, {x: .9, y: .9}]},
     {id: 'hidden-point', type: 'point', x: .1, y: .2, hidden: true},
-    {id: 'rectangle', type: 'rect', x: .3, y: .4, w: .2, h: .3, label: '선택한 영역'},
+    {id: 'rectangle', type: 'rect', x: .3, y: .4, w: .2, h: .3, label: 'Selected area'},
     {id: 'pen-between', type: 'pen', x: .2, y: .3},
-    {id: 'arrow', type: 'arrow', x: .6, y: .6, x2: .8, y2: .8, label: '긴 글자로 내용을 가리면 안 됨'},
+    {id: 'arrow', type: 'arrow', x: .6, y: .6, x2: .8, y2: .8, label: 'Long text must not cover the content'},
     {id: 'unknown', type: 'ellipse'}, null, 'invalid', []
   ]);
   const before = JSON.stringify(input);
@@ -98,9 +98,9 @@ test('all-pen, unsupported and hidden-only scenes export the untouched source im
 test('point, rectangle and arrow share their filtered number sequence without generic or custom text', async () => {
   const env = setup();
   await env.api.render(scene([
-    {id: 'point', x: .1, y: .2, label: '설명할 위치'},
-    {id: 'arrow', type: 'arrow', x: .3, y: .4, x2: .4, y2: .5, label: '가리킨 위치'},
-    {id: 'rect', type: 'rect', x: .6, y: .6, w: .1, h: .1, label: '선택한 영역'}
+    {id: 'point', x: .1, y: .2, label: 'Point to explain'},
+    {id: 'arrow', type: 'arrow', x: .3, y: .4, x2: .4, y2: .5, label: 'Pointed location'},
+    {id: 'rect', type: 'rect', x: .6, y: .6, w: .1, h: .1, label: 'Selected area'}
   ]));
   assert.deepEqual(env.calls.filter(call => call.name === 'fillText').map(call => call.args[0]), ['1', '2', '3']);
 });

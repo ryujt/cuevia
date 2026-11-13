@@ -79,9 +79,9 @@ cat > "$bundle_path/Contents/Info.plist" <<'PLIST'
   <key>NSPrincipalClass</key><string>NSApplication</string>
   <key>NSHighResolutionCapable</key><true/>
   <key>NSMicrophoneUsageDescription</key>
-  <string>화면에 대한 음성 설명을 녹음하고 OpenAI API로 전사하는 데 사용합니다.</string>
+  <string>Cuevia records your spoken explanation of the screen and transcribes it with the OpenAI API.</string>
   <key>NSScreenCaptureUsageDescription</key>
-  <string>선택한 모니터나 프로그램 화면을 캡처하여 음성과 설명을 함께 저장합니다.</string>
+  <string>Cuevia captures the selected monitor or app window and saves it with your voice and notes.</string>
 </dict>
 </plist>
 PLIST

@@ -5,5 +5,5 @@ package main
 import "errors"
 
 func nativeCaptureSources() ([]byte, error) {
-	return nil, errors.New("화면 선택은 macOS에서 사용할 수 있어요")
+	return nil, errors.New("Screen selection is only available on macOS")
 }

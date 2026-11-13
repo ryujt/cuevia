@@ -3,7 +3,7 @@
 
   const NS = 'http://www.w3.org/2000/svg';
   const COLOR = '#e08353';
-  const labels = { point: '설명할 위치', arrow: '가리킨 위치', rect: '선택한 영역' };
+  const labels = { point: 'Point to explain', arrow: 'Pointed location', rect: 'Selected area' };
   const clamp = value => Math.max(0, Math.min(1, Number(value) || 0));
   let sequence = 0;
 
@@ -47,7 +47,7 @@
       Object.entries(attrs).forEach(([key, value]) => node.setAttribute(key, String(value)));
       return node;
     };
-    const svg = make('svg', { 'aria-label': '화면 위에 표시하기', preserveAspectRatio: 'none' });
+    const svg = make('svg', { 'aria-label': 'Mark on the screen', preserveAspectRatio: 'none' });
     Object.assign(svg.style, {
       position: 'absolute', display: 'block', overflow: 'visible', zIndex: '2',
       touchAction: 'none', userSelect: 'none', cursor: 'crosshair'
@@ -74,7 +74,7 @@
         group.dataset.annotationId = annotation.id;
         group.setAttribute('role', 'button');
         group.setAttribute('tabindex', '0');
-        group.setAttribute('aria-label', `표시 ${index + 1}: ${annotation.label || labels[type] || labels.point}`);
+        group.setAttribute('aria-label', `Mark ${index + 1}: ${annotation.label || labels[type] || labels.point}`);
         group.style.cursor = 'pointer';
       }
       const start = px(annotation);
