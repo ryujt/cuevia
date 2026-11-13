@@ -32,7 +32,7 @@ seven-day retention policy applies while the app is running.
 No API keys, .env files, or user records are included in the installer.
 This installer is not code-signed.
 
-Quick reference: press Ctrl+Alt+S or choose Capture in the tray menu.
-Drag to select an area; press Esc to cancel. Choose Quit in the tray menu to
-stop the app and its server. Ports in use are skipped automatically, and
-starting Cuevia again reopens the running instance. Uninstalling keeps your data.
+On Windows, press Ctrl+Alt+S or choose Start Capture in the tray.
+Drag to select an area and press Esc to cancel. Choose Exit from the tray
+to stop the app and server. Cuevia skips ports in use and reopens the existing
+instance if launched again. Uninstalling preserves user data.

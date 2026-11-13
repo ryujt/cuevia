@@ -3,37 +3,37 @@ Cuevia installation and first launch
 Requirements
 • macOS 14.0 or later
 • Google Chrome
-• For voice recording and transcription: a microphone, an internet connection, and your own OpenAI API key
+• A microphone, internet access, and your OpenAI API key for voice recording and transcription
 
-Install
-1. Drag Cuevia.app from this image into the Applications folder.
-2. When copying finishes, eject the disk image.
-3. Open Cuevia from the Applications folder. It runs in the menu bar.
-4. Press ⌘ Command + ⌃ Control + S, or choose "Capture screen…" from the menu bar.
+Installation
+1. Drag Cuevia.app from this disk image into Applications.
+2. Eject the disk image when the copy finishes.
+3. Open Cuevia from Applications. It runs in the menu bar.
+4. Press ⌘ Command + ⌃ Control + S or choose Screen Capture… from the menu bar.
    The editor opens in Google Chrome.
 
 Permissions on first launch
-• To capture the screen, allow Cuevia in System Settings → Privacy & Security →
-  Screen & System Audio Recording ("Screen Recording" on some macOS versions).
-  If macOS asks you to relaunch the app, quit Cuevia and open it again.
-• To record voice, allow the site's microphone permission in Chrome and Google Chrome's microphone permission in macOS.
+• In System Settings → Privacy & Security → Screen & System Audio Recording
+  (called Screen Recording on some macOS versions), allow Cuevia to capture your screen.
+  If prompted, quit and reopen Cuevia.
+• To record audio, allow microphone access for the site in Chrome and for Google Chrome in macOS.
 • If macOS blocks the app, ask the distributor for the current notarized release.
 
 Your settings
-Open the Cuevia menu bar icon → "Settings…", enter your own OpenAI API key, choose
-a transcription model, and save. The default transcription model is whisper-1.
-Never share your key with others or put it inside the app bundle.
+Open Settings… from the Cuevia icon in the menu bar. Enter your OpenAI API key,
+choose a speech transcription model, and save. The default model is whisper-1.
+Keep your key private and outside the app bundle.
 Settings are stored in ~/Library/Application Support/Cuevia/.env.
-The Cuevia.env.example included in this image is a public reference file with an empty key.
+The included Cuevia.env.example is a public configuration sample with an empty key.
 
-Screens and text notes can be saved without an API key.
-Voice recording and transcription require your own OpenAI API key. Recordings are sent
-to the OpenAI API for transcription, and your API usage may be billed.
+Log can save captures and text explanations without an API key.
+Record and speech transcription require your OpenAI API key. Cuevia sends the audio
+to the OpenAI API for transcription. Usage charges may apply to your account.
 
 Launch at login
-This DMG does not register Cuevia to launch at login. If you want that, add Cuevia
-yourself in System Settings → General → Login Items & Extensions.
+To launch Cuevia at login, add it in System Settings → General →
+Login Items & Extensions. The DMG leaves that setting for you to configure.
 
 Included files
-Only Cuevia.app, a link to the Applications folder, this guide, and Cuevia.env.example with an empty key.
-The distributor's personal settings, API keys, recordings, original screens, and session data are not included.
+The disk image contains Cuevia.app, an Applications shortcut, this guide, and Cuevia.env.example with an empty key.
+The distributor's personal settings, API keys, recordings, original captures, and session materials are excluded.

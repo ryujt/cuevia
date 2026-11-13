@@ -1,35 +1,35 @@
-# Cuevia Screen Layout Design
+# Cuevia screen layout design
 
 - Reference date: 2026-10-31
-- Status: TO-BE proposal for a new macOS app. Values and arrangements are implementation proposals, not measured UI.
-- Scope: per-screen sections combined. Includes all 11 user-perceived screens and the main overlays.
-- Source links: [Core design](system-design-to-be.md), [Navigation](navigation.md), [Requirements](system-design-to-be.md#requirements), [Public contracts](system-design-to-be.md#contracts), [Delivery rules](system-design-to-be.md#delivery), [Verification plan](system-design-to-be.md#verification).
+- Status: Proposed design for a new macOS app. Measurements and layouts are implementation proposals.
+- Scope: All 11 user-visible screens and major overlays.
+- References: [core design](system-design-to-be.md), [navigation](navigation.md), [requirements](system-design-to-be.md#requirements), [public contracts](system-design-to-be.md#contracts), [delivery rules](system-design-to-be.md#delivery), and [verification plan](system-design-to-be.md#verification).
 
 <a id="common"></a>
 ## 1. Common layout and input rules
 
-Cuevia is a single local macOS service. The list, settings, and review use the main window, while recording uses floating toolbar, canvas, and note windows together. The `layout` blocks below express region containment and reading order and do not determine code modules or the OS window hierarchy. Horizontal numbers are relative distribution weights and do not guarantee pixels or exact screen ratios. Vertical sizes are not specified in the DSL.
+Cuevia is a single local macOS service. The library, settings, and review use the main window. Recording uses floating toolbar, canvas, and note windows together. Each `layout` below shows region nesting and reading order. Code modules and the OS window hierarchy are defined separately. Horizontal numbers are relative weights. The DSL specifies neither exact widths nor heights.
 
-| Common item | Target behavior |
+| Common concern | Target behavior |
 |---|---|
-| Recording state | Show Starting, recording, paused, finished, and error with text and icons. Never distinguish recording by red alone |
-| Input target | Show separately the activeScene during recording, the inspectedScene while browsing, the note's explicit target, and post-recording supplementation. Never confuse the OS frontmost window with the recording target |
-| Input commit | Distinguish temporary strokes, text, and note input from saved state. On save failure, keep the draft and show the failed item and retry |
-| Keyboard / IME | Tab reading order matches layout order. Tool shortcuts and global commands never intercept characters during IME (e.g. Korean) composition. Pause and Stop request end of composition and then handle committed/cancelled/blocked responses. Blocked keeps the draft and actual recording state; retry after commit/cancel. No forced commit by closing a window |
-| Shortcuts | Tool shortcuts work only when the canvas has focus. In input fields, character and editing keys take priority. Global commands are enabled after user settings and conflict checks. Esc cancels selection/temporary work and does not stop recording |
-| Accessibility | Every icon provides an action name, state, and reason when disabled. VoiceOver reads the capture name, Scene number, time, and target. State warnings announce only a summary and do not continuously read out the audio meter or every time update |
-| Non-mouse paths | Provide keyboard alternatives for the Scene list, shape list, and focus coordinate/position adjustment. Keep it possible to express the same question or request via text input |
-| Loading / duplicates | Show running state, cancelability, and result in the work area. Block duplicate start, capture, stop, compile, and export commands. Never blank the whole UI without reason |
-| Empty / errors | Empty lists offer a next action. Distinguish permission denied, device lost, save failure, missing assets, and absent transcription. Never attach a success badge to an empty result |
-| Size / scale | With large text and narrow displays, the main window uses internal scrolling and vertical stacking. Primary action buttons are never hidden behind horizontal scrolling. Floating windows are restored within screen bounds |
-| Privacy | Capture target and whether recording is on can be checked before starting and during recording. Automatic prompt generation is local processing, and there is no UI for automatic sending to an external AI |
+| Recording status | Use text and icons for Starting, Recording, Paused, Stopped, and Error. Use cues beyond red alone to indicate recording. |
+| Input target | Identify activeScene, inspectedScene, the explicit note target, and post-recording revisions separately. The frontmost OS window does not determine the recording target. |
+| Input commitment | Distinguish provisional strokes, text, and notes from saved input. On failure, retain the draft and show the failed item and retry action. |
+| Keyboard and IME | Tab order follows layout order. Tool shortcuts and global commands leave Korean IME composition intact. Pause and Stop request composition completion and handle committed, cancelled, or blocked. If blocked, retain the draft and actual recording state, and retry after committing or canceling. Closing a window never forces commitment. |
+| Shortcuts | Tool shortcuts work only when the canvas has focus. Text fields prioritize text and editing keys. Enable global commands after user configuration and conflict checks. Esc cancels selection or provisional input and leaves recording active. |
+| Accessibility | Give every icon an action name, state, and disabled reason. VoiceOver reads capture name, Scene number, time, and target. Announce summaries of status warnings and avoid repeated announcements for audio meters and timer updates. |
+| Keyboard alternatives | Provide keyboard access to scene and shape lists and focus coordinate or position controls. Users can express the same question or request in text. |
+| Loading and duplicates | Show work in progress, cancellation availability, and results in the working area. Prevent duplicate start, capture, stop, compile, and export commands. Keep surrounding UI visible. |
+| Empty states and errors | Provide a next action for empty lists. Distinguish denied permissions, lost devices, save failures, missing assets, and missing transcripts. Only actual results qualify for success. |
+| Size and scale | Use internal scrolling and vertical stacking for large text and narrow displays. Keep primary actions within view without horizontal scrolling. Restore floating windows within display bounds. |
+| Privacy | Show capture source and microphone status before and during recording. Automatic prompt generation is local. External AI delivery is manual. |
 
-New captures, annotations and focus, and notes during recording use the [SessionCoordinator contract](system-design-to-be.md#contracts). All recording input while Paused is read-only and becomes available after Resume. Corrections after finishing are saved as a separate supplementation revision. Post-recording supplementation is never presented as if it were original material collected at recording time.
+New captures, annotations, focus, and notes use the [SessionCoordinator contract](system-design-to-be.md#contracts). While Paused, all recording inputs are read-only until Resume. Save post-recording corrections in a separate revision and label them as later additions.
 
 <a id="sessionlibrary"></a>
 ## 2. SessionLibrary
 
-Purpose: start a new session and select a locally saved session. This is the main window entered on first app launch, after skipping recovery, and after finishing review. The `SessionLibrary` identifier is used instead of an address. [Navigation](navigation.md#start), [FR-08](system-design-to-be.md#requirements).
+Start a new session or choose a locally saved one. This is the main window on first launch, after skipping recovery, or after leaving review. It uses the `SessionLibrary` identifier. [Navigation](navigation.md#start), [FR-08](system-design-to-be.md#requirements).
 
 ```layout
 Screen V LibraryHeader, LibraryBody, LibraryFooter
@@ -41,17 +41,17 @@ LibraryFooter > LocalStorageSummary, LibraryHelp
 
 | Region | Display, input, and result |
 |---|---|
-| LibraryHeader | New session opens SessionSetup; Settings opens Settings |
-| SessionSearch·SessionRows | Name, date, input mode, recording/supplementation state, generated revision, and warning summary. Selecting opens SessionReview without automatically resuming recording |
-| RecoveryNotice | Number of incomplete recordings and a way to open RecoveryPanel. Originals are kept even if handled later |
-| LibraryStatus·LocalStorageSummary | List loading, read failure and retry, storage location and usage summary |
+| LibraryHeader | New Session opens SessionSetup. Settings opens Settings. |
+| SessionSearch and SessionRows | Show name, date, input mode, recording and revision state, generation revision, and warning summary. Selecting a session opens SessionReview with recording stopped. |
+| RecoveryNotice | Show the unfinished session count and open RecoveryPanel. Deferring recovery preserves the originals. |
+| LibraryStatus and LocalStorageSummary | Show loading, read failures with retry, storage location, and space used. |
 
-An empty session list shows **Select a screen and record your first question** and the New session button. Read failure and an empty list are never shown as the same state. In a narrow window, the search and settings buttons are stacked vertically, and secondary table metadata moves to a second line within the row. The list can be navigated, opened, and the search cleared with the keyboard, and each row's full state is included in its VoiceOver name.
+An empty library shows **Choose a screen and record your first question** with a New Session button. Read failure has a separate state. Stack search and settings controls in narrow windows and move secondary metadata to a second line within each row. Support keyboard navigation, opening, and clearing search. Include the row's overall state in its VoiceOver name.
 
 <a id="sessionsetup"></a>
 ## 3. SessionSetup
 
-Purpose: confirm the first Scene, intent mode, and microphone use. Entered via New session in SessionLibrary. Nothing is recorded yet, and Start is possible only after one Scene is prepared. [Navigation](navigation.md#start), [FR-01·FR-02·FR-05·FR-09](system-design-to-be.md#requirements).
+Confirm the first Scene, intent mode, and microphone use. Enter through New Session in SessionLibrary. Recording is still stopped, and Start requires one prepared Scene. [Navigation](navigation.md#start), [FR-01, FR-02, FR-05, FR-09](system-design-to-be.md#requirements).
 
 ```layout
 Screen V SetupHeader, SetupBody, SetupStatus, SetupActions
@@ -62,7 +62,7 @@ InputSetup V IntentMode, MicrophoneChoice, MicrophoneStatus, TranscriptionChoice
 SetupActions > SaveDraftButton, CloseSetupButton, StartButton
 ```
 
-In a narrow window, `InputSetup` is stacked after `CaptureSetup`.
+In a narrow window, stack `InputSetup` below `CaptureSetup`.
 
 ```layout
 Screen V SetupHeader, CaptureSetup, InputSetup, SetupStatus, SetupActions
@@ -74,19 +74,19 @@ SetupActions V StartButton, SaveDraftButton, CloseSetupButton
 
 | Region | Display, input, and result |
 |---|---|
-| CaptureType·SelectCaptureButton | Window, display, or region within a single display. Opens the OS CapturePicker or RegionOverlay and never tracks window titles live on its own |
-| InitialScenePreview·CaptureMetadata | Immutable image, target name and type, actual capture time, size, scale, and region. Shows **Captured before recording started**. Keeps the existing draft if reselection fails |
-| IntentMode·SessionGoal | Explicit choice of question, change request, or mixed, and an optional overall goal. Intent can be entered as text even without transcription |
-| MicrophoneChoice·MicrophoneStatus | Use / don't use, device selection, permission, and level check. Not using means **Text only**. On error, starting without a microphone is chosen explicitly |
-| TranscriptionChoice | Availability, not-configured, permission, and local model state for optional transcription. Distinguishes that transcription being unavailable does not mean microphone recording is unavailable |
-| SetupStatus·StartButton | Readiness and failure reasons for capture, settings, and recording start. Start without a first Scene is disabled. Prevents duplicate starts during Starting |
+| CaptureType and SelectCaptureButton | Choose a window, display, or region on one display. Open the OS CapturePicker or RegionOverlay. Capture metadata is fixed at capture time. |
+| InitialScenePreview and CaptureMetadata | Show the immutable image, source name and type, actual capture time, dimensions, scale, and region. Mark **Captured Before Recording**. Preserve the draft if reselection fails. |
+| IntentMode and SessionGoal | Explicit question, change request, or mixed mode and an optional overall goal. Intent can be entered as text without transcription. |
+| MicrophoneChoice and MicrophoneStatus | Enable or disable the microphone, choose a device, and check permission and level. Show **Text Only** when disabled. On error, offer explicit choice to start without a microphone. |
+| TranscriptionChoice | Show availability, configuration, permission, and local model status for optional transcription. Show microphone recording availability separately. |
+| SetupStatus and StartButton | Show capture, configuration, and recording readiness and failure reasons. Disable Start without the first Scene and prevent duplicate starts during Starting. |
 
-Canceling the first capture restores Setup and the existing draft. Capture permission denial places go-to-settings and retry below the selection area. The preflight result alone never blocks the OS picker; whether Start is possible is decided by an actually captured and validated asset. Microphone permission denial places alternative input below the microphone. Any IME composition remaining in the name or goal is committed before Start. Start delays show the actual step, such as **Preparing microphone**, and the recording state turns on from the moment of success. A start failure keeps the draft and input on this screen.
+Canceling the first capture restores Setup and the existing draft. If capture permission is denied, offer Settings and Retry below the picker controls. Allow the OS picker after a preflight failure and base Start availability on an actual verified capture. If microphone permission is denied, show alternative input beneath the microphone controls. Commit any Korean IME composition in the name or goal before Start. Show the actual startup stage, such as **Preparing Microphone**. Recording state begins at successful start. Preserve draft and input on failure.
 
 <a id="recordingtoolbar"></a>
 ## 4. RecordingToolbar
 
-Purpose: check recording state, target, and key commands while looking at other apps. Shown from Starting and kept during recording and pause; after finishing, SessionReview takes over its role. Closing the window hides it; stopping recording uses an explicit Stop. [Navigation](navigation.md#recording), [FR-02·FR-03·FR-09](system-design-to-be.md#requirements).
+Check recording state, target, and important commands while viewing another app. The toolbar appears in Starting and stays through Recording and Paused. SessionReview takes over after stopping. Closing the window hides it. Stop explicitly ends recording. [Navigation](navigation.md#recording), [FR-02, FR-03, FR-09](system-design-to-be.md#requirements).
 
 ```layout
 Screen V ToolbarMain, ToolbarStatus
@@ -94,7 +94,7 @@ ToolbarMain > RecordingState, SessionClock, ActiveSceneLabel, MicrophoneIndicato
 ToolbarStatus > OperationMessage, SaveState, FocusSummary
 ```
 
-When horizontal space is insufficient, commands wrap onto two lines, and Stop, state, and Pause/Resume are always exposed.
+If horizontal space is limited, wrap commands into two rows and keep Stop, status, and Pause/Resume visible.
 
 ```layout
 Screen V EssentialControls, SecondaryControls, ToolbarStatus
@@ -105,34 +105,34 @@ ToolbarStatus V OperationMessage, SaveState, FocusSummary
 
 | Region | Display, input, and result |
 |---|---|
-| RecordingState·SessionClock | Starting, recording, paused; session elapsed time and actual recording state. Pause intervals remain in session elapsed time, and collection/recording interruptions are indicated separately |
-| ActiveSceneLabel | **Recording target Sxx: title**. Independent of the OS frontmost window and the viewed scene. Clicking brings that SceneCanvas to the front |
-| MicrophoneIndicator | Not used, recording, paused, device error. Low level is never confused with permission failure |
-| CaptureButton·CanvasButton·NoteButton | Select new Scene, open canvas, open notes. While operating the source app, CanvasButton shows **Resume scene explanation** and ends the InteractionInterval when explicitly run. Prevents duplicate commands during capture. Recording target is unchanged even when auxiliary windows are open |
-| PauseResumeButton·ReviewButton | Pause/Resume updates the state. Review recording opens read-only Review after Pause succeeds |
-| StopButton | **Stop and generate prompt**. Shows progress of saving accepted input and stopping, and blocks duplicate runs |
-| SaveState·FocusSummary | Saving, saved, save failed; the persisting focus target and release. Warns of elapsed time when focus is held long |
+| RecordingState and SessionClock | Show Starting, Recording, or Paused, session elapsed time, and actual audio status. Elapsed time includes pauses. Identify gaps in collection or recording separately. |
+| ActiveSceneLabel | Show **Recording Target Sxx: Title**, independent of the frontmost OS window or viewed scene. Activating the label raises the corresponding SceneCanvas. |
+| MicrophoneIndicator | Show Off, Recording, Paused, or Device Error. Distinguish a low input level from permission failure. |
+| CaptureButton, CanvasButton, and NoteButton | Choose a new Scene, open the canvas, or open notes. During source-app interaction, CanvasButton shows **Resume Scene Explanation** and closes the InteractionInterval on activation. Prevent duplicate capture requests. Opening auxiliary windows preserves the target. |
+| PauseResumeButton and ReviewButton | Pause/Resume updates the state. Review Recording opens read-only Review after a successful pause. |
+| StopButton | **Stop and Generate Prompt**. Show accepted input save and finalization progress, and prevent duplicate commands. |
+| SaveState and FocusSummary | Show Saving, Saved, or Save Failed, plus the active focus target and its release control. Warn when focus has been active a long time. |
 
-While Paused, capture, new annotations, and notes are shown disabled with the reason exposed. During Pause/Stop processing, new gestures and captures are blocked, but the existing editor's composition-end responses are accepted. If blocked, it shows **Interruption incomplete: commit/cancel input and try again** and preserves the draft and actual recording state. On microphone device loss or sleep, new samples stop, a gap is recorded, the target ends, and then paused is shown, requiring an explicit Resume. If a composition block prevents completing the transition to paused, **Audio interrupted/failed** is shown separately from the actual session state, and the **Recording** badge is not kept. Global shortcuts never intercept IME composition, and Esc during capture selection cancels only the selection. The toolbar must be findable and activatable by keyboard, and the drag handle needs an alternative for moving the window.
+While Paused, disable capture, new annotations, and notes with a reason. During Pause or Stop, block new gestures and captures while accepting the current editor's composition response. If blocked, show **Could not stop. Commit or cancel your input and try again**, and keep the draft and actual recording state. Device loss or sleep stops new samples, opens a gap, closes the target, and pauses pending explicit Resume. If composition blocks the pause transition, show **Audio Stopped** or **Audio Failed** separately from actual session state and clear the recording badge. Global shortcuts leave IME composition intact. Esc during capture selection cancels the selection only. Make the toolbar keyboard-accessible and provide a keyboard alternative to dragging it.
 
 <a id="capturepicker"></a>
 ## 5. CapturePicker
 
-Purpose: OS-provided window and display selection. Entered from the first selection in Setup or a new capture during recording. The block below is not a custom picker layout to be implemented by the product but a **diagram** describing the contract before and after the app. The actual appearance and cancel method may vary by OS version and permission state. [Navigation](navigation.md#start), [FR-01·FR-09](system-design-to-be.md#requirements).
+This is the OS window and display picker, entered from Setup or when adding a capture during recording. The block illustrates the app contract around the OS picker. Appearance and cancellation can vary by OS version and permission state. [Navigation](navigation.md#start), [FR-01, FR-09](system-design-to-be.md#requirements).
 
 ```layout
 Screen V OSSelectionSurface
 OSSelectionSurface V OSManagedTargetChoices, OSManagedSelectionActions
 ```
 
-`OSManagedTargetChoices` are the selectable windows and displays exposed by the OS, and `OSManagedSelectionActions` are confirm and cancel selection. The app makes no promises about the detailed fields, shortcuts, or ordering of the OS-owned UI. Capture modes and region options added by the app are chosen in SessionSetup or RecordingToolbar.
+`OSManagedTargetChoices` represents the windows and displays offered by the OS. `OSManagedSelectionActions` represents confirmation and cancellation. The OS controls fields, shortcuts, and sorting. Choose app-specific capture modes and region options in SessionSetup or RecordingToolbar.
 
-Before selection, the app hides its auxiliary windows and restores them after completion or cancellation. Selection success alone does not change the Scene; it is applied after actual capture and save succeed. Permission denial, protected content, vanished windows, and display changes are shown in the calling screen's error area, and the previous Scene is kept. In region mode, RegionOverlay opens after display selection succeeds. The OS picker's VoiceOver, keyboard, and multi-display behavior are empirically verified on supported OS versions.
+Hide auxiliary windows before selection and restore them after completion or cancellation. Change the Scene only after capture and save succeed. Show permission denial, protected content, missing windows, and display changes in the calling screen while preserving the prior Scene. In region mode, open RegionOverlay after display selection. Verify OS picker behavior with VoiceOver, the keyboard, and multiple displays on supported OS versions.
 
 <a id="regionoverlay"></a>
 ## 6. RegionOverlay
 
-Purpose: confirm a static capture region within one display. Opens only over that screen after choosing a display. Regions spanning multiple displays are not supported. [Navigation](navigation.md#recording), [FR-01](system-design-to-be.md#requirements).
+Confirm a static region on a single display. The overlay opens on that display after selection. Regions must fit within one display. [Navigation](navigation.md#recording), [FR-01](system-design-to-be.md#requirements).
 
 ```layout
 Screen V RegionInstructions, DisplaySelectionSurface, RegionActions
@@ -142,16 +142,16 @@ RegionActions > RegionDimensions, KeyboardAdjustHint, CancelRegionButton, Confir
 
 | Region | Display, input, and result |
 |---|---|
-| DisplaySelectionSurface | A selection frame overlaid on a single dimmed screen. Drag to start and adjust; resize with handles. Constrained to the display bounds; coordinates and size are saved in the result metadata |
-| RegionDimensions·KeyboardAdjustHint | Shows selection size and scale readably. Provides keyboard move/resize and, if needed, a numeric input alternative |
-| RegionActions | Only a valid region can be confirmed. Enter to confirm and Esc to cancel never intercept text composition. Ensures the selection indicator itself does not appear in the final capture |
+| DisplaySelectionSurface | Overlay a selection frame on the dimmed display. Drag to create or adjust it and use handles to resize. Constrain it to the display and store its coordinates and size in metadata. |
+| RegionDimensions and KeyboardAdjustHint | Show readable dimensions and scale. Offer keyboard movement and resizing, and numeric input when needed. |
+| RegionActions | Enable confirmation only for valid regions. Enter and Esc confirm or cancel outside text composition. Exclude the selection overlay from the final capture. |
 
-The initial empty region shows **Specify a region**. Too-small regions, display disconnection during selection, and scale changes block confirmation and offer reselection or cancel. Cancel restores the previous activeScene and window arrangement. With large text or small displays, tool descriptions may collapse, but confirm, cancel, and selection size remain exposed. Precise keyboard selection and whether the overlay is excluded are implementation verification items.
+Initially show **Select a Region**. If the region is too small, the display disconnects, or its scale changes, block confirmation and offer reselection or cancellation. Canceling restores the previous activeScene and window layout. With large text or a small display, tool descriptions may collapse, while Confirm, Cancel, and dimensions stay visible. Verify precise keyboard selection and overlay exclusion during implementation.
 
 <a id="scenecanvas"></a>
 ## 7. SceneCanvas
 
-Purpose: review the original capture together with time-synchronized annotations, pointing, and post-recording supplementation. Entered by selecting a Scene from the toolbar or SessionReview, and can be open together with NotePanel. The captured image is not modified; annotations are shown on a separate layer. [Navigation](navigation.md#recording), [FR-01·FR-03·FR-06](system-design-to-be.md#requirements).
+Inspect the original capture, time-aligned annotations and focus, and post-recording revisions. Open from the toolbar or a Scene selection in SessionReview. NotePanel can stay open alongside it. Annotations are displayed on a separate layer above the original image. [Navigation](navigation.md#recording), [FR-01, FR-03, FR-06](system-design-to-be.md#requirements).
 
 ```layout
 Screen V CanvasHeader, CanvasBody, CanvasFooter
@@ -163,7 +163,7 @@ AnnotationInspector V SelectedObjectDetails, ObjectList, FocusControls
 CanvasFooter > ZoomControls, CanvasTime, SaveState, SceneNoteButton
 ```
 
-When narrow, SceneRail moves to a top selection strip and the inspector to a disclosure area.
+In narrow layouts, move SceneRail to a selection strip at the top and make the inspector expandable.
 
 ```layout
 Screen V CanvasHeader, SceneStrip, AnnotationTools, SceneViewport, InspectorDisclosure, CanvasMessage, CanvasFooter
@@ -175,23 +175,23 @@ CanvasFooter > ZoomControls, CanvasTime, SaveState, SceneNoteButton
 
 | Region | Display, input, and result |
 |---|---|
-| InspectedSceneTitle·ActiveSceneBadge | Shows viewed Sxx and recording target Syy together, with an explicit warning when they differ. The target switch button is used only during recording, and viewing a past Scene does not itself switch the target |
-| CanvasModeBadge | **Recording input**, **Paused: read-only**, **Post-recording supplementation**. Post-recording supplementation uses a marker distinct from records at the original time |
-| InteractSourceButton | **Operate source app** hides the canvas and starts an InteractionInterval. **Resume scene explanation** in the toolbar ends the interval. Speech crossing the interval is excluded from automatic linking to the existing target. Distinct from opening the note window |
-| AnnotationTools | Select, pen, arrow, rectangle, text, pointing. Color, thickness, and the current tool can be checked as text. Changes are committed through CommitInput |
-| SceneViewport | Separates original size/coordinates from on-screen display size. Zoom and pan do not change saved coordinates. Shows the transparent annotation layer and focus over the original |
-| AnnotationInspector·ObjectList | Annotation ID, type, linked time, content, and selection state. Keyboard selection, delete/correct, and text alternatives. Original annotations use a traceable correction policy |
-| FocusControls | Current point position, target, held duration, and explicit release. Warns of stale focus. Target switch, deleting the selected annotation, Pause, and Stop close focus; Resume starts with target released |
-| CanvasTime·SceneNoteButton | Shows the difference between viewing time and recording time. Opening this Scene's note only sets the NotePanel target; activeScene stays the same |
+| InspectedSceneTitle and ActiveSceneBadge | Show inspected Sxx and recording target Syy together, with a warning when they differ. The explicit target switch is available while recording. Viewing earlier scenes leaves the target intact. |
+| CanvasModeBadge | **Recording Input**, **Paused: Read-Only**, or **Post-Recording Revision**. Distinguish later revisions from original timeline input. |
+| InteractSourceButton | **Interact with Source App** hides the canvas and starts InteractionInterval. **Resume Scene Explanation** in the toolbar closes it. Speech crossing the interval requires review before assignment to an existing target. Opening notes leaves the mode intact. |
+| AnnotationTools | Selection, pen, arrow, rectangle, text, and pointing. Identify color, width, and current tool in text. Commit changes through CommitInput. |
+| SceneViewport | Separate source coordinates and size from display size. Zoom and pan preserve stored coordinates. Show transparent annotation and focus layers over the original. |
+| AnnotationInspector and ObjectList | Show annotation ID, type, linked time, content, and selection state. Offer keyboard selection, deletion, and correction, plus a text alternative. Use traceable corrections for original annotations. |
+| FocusControls | Show current point, target, elapsed time, and explicit release. Warn about long-held focus. Close focus on target change, deletion of the selected annotation, Pause, or Stop. Resume starts with no focused target. |
+| CanvasTime and SceneNoteButton | Show inspection time and recording time separately. Opening notes for this Scene sets only the NotePanel target. |
 
-While waiting for a new capture, only the processing state is shown over the existing image. A capture failure keeps the existing Scene and input. A missing image asset shows Scene metadata, a missing message, re-check, and go-to-review instead of a blank black canvas. Recording cannot start without a Scene, but a damaged recovered copy can be opened in this error state.
+While capture is pending, show progress over the current image. On failure, keep the current Scene and input. For a missing image, show Scene metadata, a missing-asset message, a recheck action, and a path to Review. Starting requires a Scene, but damaged recovered sessions can open in this error state.
 
-The text tool shows the temporary string during composition and saves the event after composition completes and is committed. Esc cancels temporary shapes and input and does not stop recording. A Pause or Stop request while drawing waits for the commit/cancel result of the accepted temporary input. Tool shortcuts are not executed when the Canvas is not focused or when typing in NotePanel. VoiceOver accesses the image through the Scene name, capture metadata, annotation list, and focus position description. When coordinates alone cannot convey meaning, a descriptive text for the target can be entered alongside.
+The text tool shows provisional text during composition and saves the event after commitment. Esc cancels provisional shapes or input and leaves recording running. Pause or Stop during drawing waits for accepted provisional input to be committed or canceled. Tool shortcuts require canvas focus and remain inactive while typing in NotePanel. VoiceOver provides the Scene name, capture metadata, annotation list, and focus location. Offer a text description when coordinates alone would be unclear.
 
 <a id="notepanel"></a>
 ## 8. NotePanel
 
-Purpose: enter meaning instead of or alongside speech, and supplement information after finishing. Opened from the toolbar, canvas, or review. The recording target does not change even when this window comes to the OS front. [Navigation](navigation.md#recording), [FR-04·FR-06](system-design-to-be.md#requirements).
+Enter meaning alongside or in place of speech and add information after recording. Open from the toolbar, canvas, or review. Raising this window leaves the recording target intact. [Navigation](navigation.md#recording), [FR-04, FR-06](system-design-to-be.md#requirements).
 
 ```layout
 Screen V NoteHeader, NoteTarget, NoteEditor, NoteHistory, NoteStatus, NoteActions
@@ -204,21 +204,21 @@ NoteActions > SaveNoteButton, ClearDraftButton
 
 | Region | Display, input, and result |
 |---|---|
-| NoteModeBadge | Clearly distinguishes recording input, paused read-only, and post-recording supplementation |
-| TargetScopeSelector·ExplicitSceneSelector | Whole session or a specific Sxx, labeled **Note target**. Commits/preserves the in-progress draft before changing target and never silently changes existing notes' links |
-| NoteIntent | Choose question, change request, or context. Shows the session's default mode while allowing each note's actual intent to be stated |
-| NoteTextInput | Multi-line text input with IME support. Enter inserts a line break; save is a separate command. The placeholder is an example and is never saved as input data |
-| SavedNotes | Time, target, intent, and recorded/postrecord distinction. Select to view content and make permitted corrections. Never switches automatically to another Scene's notes during recording |
-| NoteStatus·SaveNoteButton | Saving, done, failed; empty-content validation and shortcut hints. The draft is not cleared before success is confirmed |
+| NoteModeBadge | Identify recording input, paused read-only mode, or post-recording revision. |
+| TargetScopeSelector and ExplicitSceneSelector | Choose the whole session or a specific Sxx under **Note Target**. Commit or retain drafts before changing the target. Existing notes keep their original links unless explicitly changed. |
+| NoteIntent | Choose question, change request, or context. Show the session default and let each note specify its actual intent. |
+| NoteTextInput | Support multiline Korean text. Enter inserts a newline and Save is separate. Placeholder examples stay out of saved data. |
+| SavedNotes | Show time, target, intent, and recorded or postrecord state. Select a note to inspect or make allowed corrections. Recording target changes leave the note selection intact. |
+| NoteStatus and SaveNoteButton | Show saving, completion, failure, empty-content validation, and shortcut guidance. Clear the draft after confirmed success. |
 
-In a text-only session, this window opens together as the first recording window so questions can be left even without a microphone. An empty note list provides a target and examples. While Paused, the editor, save, and target-change inputs are disabled, and existing notes can be read. Post-recording supplementation saves a supplementation badge, authoring time, and linked target, and marks the prompt as stale.
+In text-only sessions, open this window as the first input surface so the user can record a question without a microphone. An empty list shows the target and an example. While Paused, disable the editor, save, and target controls while allowing users to read saved notes. Post-recording revisions save their badge, creation time, and target, and mark the prompt stale.
 
-The save shortcut never intercepts commit during IME composition. Save happens after composition ends, and hiding the window, changing target, or Stop indicate that an unsaved draft exists. Errors provide cause and retry in NoteStatus. When narrow, TargetScope and Scene selection are stacked vertically, and even with history collapsed, the input target and save state remain. VoiceOver announces save success once and does not repeatedly read the input content.
+Save shortcuts leave Korean IME composition intact. Save after composition, and indicate unsaved drafts before hiding the window, changing target, or stopping. Show errors and retry in NoteStatus. Stack TargetScope and scene selection in narrow windows. Keep input target and save status visible when history is collapsed. VoiceOver announces save success once without repeating the input.
 
 <a id="sessionreview"></a>
 ## 9. SessionReview
 
-Purpose: review originals, the timeline, and unresolved references, and supplement after finishing. Entered via Paused review, automatic generation after Stop, opening a saved session, or completed recovery. [Navigation](navigation.md#pause-review), [FR-05·FR-06·FR-08](system-design-to-be.md#requirements).
+Review originals, timing, and unresolved references, and add post-recording revisions. Enter from paused review, automatic generation after Stop, opening a saved session, or completed recovery. [Navigation](navigation.md#pause-review), [FR-05, FR-06, FR-08](system-design-to-be.md#requirements).
 
 ```layout
 Screen V ReviewHeader, ReviewStateBanner, ReviewBody, ReviewTimeline, ReviewActions
@@ -232,7 +232,7 @@ ReviewTimeline V TimelineTracks, TimelinePosition
 ReviewActions > ReturnToLibraryButton, ResumeRecordingButton, AddCorrectionButton, GeneratePromptButton, OpenPromptButton
 ```
 
-A narrow window shows the evidence first and stacks the unresolved list and transcription below.
+In narrow windows, show evidence first and stack unresolved items and transcripts below.
 
 ```layout
 Screen V ReviewHeader, ReviewStateBanner, ReviewSceneSelector, EvidenceViewer, ReviewTimeline, ReviewInspector, ReviewActions
@@ -246,28 +246,28 @@ ReviewActions V GeneratePromptButton, OpenPromptButton, AddCorrectionButton, Res
 
 | Region | Display, input, and result |
 |---|---|
-| ReviewStateBanner | Paused read-only, post-recording supplementation available, recovered copy and missing ranges, compile/save errors, awaiting_input_review. artifact_status and intent_status are separated to distinguish base material success from automatic question generation success |
-| IntentModeSelector·RevisionState | Question, request, or mixed mode, plus input revision and prompt revision. Mode changes are applied as post-recording supplementation and show regeneration required |
-| ReviewSceneRows·SelectedScenePreview | Scene ID, capture time, target metadata, and actual file existence. Selecting is viewing and does not change activeScene |
-| AudioPlayback | Audio waveform/segments, playback, speed, missing audio, microphone unused. Playback does not mean resuming recording. Provides keyboard control and time text |
-| EventContext·TimelineTracks | Check Scene changes, annotations, focus, notes, and audio at the same point in time. Shows capture SelectionIntervals, source-app InteractionIntervals, and candidates/unresolved status for speech crossing their end. Shows Pause boundaries and accepted order, and distinguishes wall time from session time |
-| UnresolvedItems | Actually judged items such as an ambiguous "here", unlinked speech or Scenes, and transcription failures or low-confidence segments. Selecting shows the related time, Scene, and evidence |
-| TranscriptEditor·CorrectionActions | Distinguishes no transcription / pending / failed / partial / complete. Shows the original text and the results of manual transcription, correction, or keeping as unconfirmed. Also checks masking of derived delivery images and remaining text quotes. Never auto-guesses speech content |
-| AddCorrectionButton | Opens the supplementation mode of NotePanel or SceneCanvas after finishing. Preserves existing records and changes the revision |
-| ExternalInputReview | Shows the actual external provider, stage, and sending scope. For external ASR, play the selected original audio and excluded ranges; for semantic organization, check the reviewed text and masked frames. Never claims that image masking also masked audio |
-| ReviewedRevisionStatus·RunReviewedExternalButton | Runs **Process externally with reviewed materials** for a fixed ReviewInputRevision and scope hash. Requires re-review if changed after review. Never uploads automatically just because a provider is configured |
-| GeneratePromptButton·OpenPromptButton | Automatic generation progress right after finishing; regenerate after supplementation. Only the current revision's result is shown as latest |
+| ReviewStateBanner | Show paused read-only state, revision availability, recovered data and gaps, compilation and save errors, or awaiting_input_review. Show artifact_status and intent_status separately so evidence generation and automatic question generation have distinct outcomes. |
+| IntentModeSelector and RevisionState | Show question, request, or mixed mode and input and prompt revisions. Mode changes after recording count as revisions and require regeneration. |
+| ReviewSceneRows and SelectedScenePreview | Show Scene ID, capture time, source metadata, and file availability. Selecting a row inspects the Scene and leaves activeScene intact. |
+| AudioPlayback | Show waveform or intervals, playback, speed, gaps, and microphone-off state. Playback leaves recording stopped. Provide keyboard controls and textual times. |
+| EventContext and TimelineTracks | Align Scene changes, annotations, focus, notes, and audio. Show SelectionInterval, InteractionInterval, their outcomes, and unresolved or candidate links for overlapping speech. Show pause boundaries and accepted order, with separate wall and session times. |
+| UnresolvedItems | Show actual ambiguous references such as “here,” unlinked speech or scenes, failed transcription, and low-confidence intervals. Selecting an item shows its time, Scene, and evidence. |
+| TranscriptEditor and CorrectionActions | Show absent, pending, failed, partial, or complete transcripts. Show the original and outcomes of manual transcription, correction, or leaving unconfirmed. Review masking of derived delivery images and remaining text quotes. Require evidence for speech content. |
+| AddCorrectionButton | Open NotePanel or SceneCanvas in revision mode after recording. Preserve prior records and advance the revision. |
+| ExternalInputReview | Show the actual provider, stage, and transmission scope. For external ASR, play selected audio and excluded intervals. For interpretation, show reviewed text and masked frames. Audio exclusion is separate from image masking. |
+| ReviewedRevisionStatus and RunReviewedExternalButton | **Process Reviewed Materials Externally** uses the pinned ReviewInputRevision and scope hash. Changes after review require a new review. Provider configuration alone does not upload data. |
+| GeneratePromptButton and OpenPromptButton | Show automatic generation progress after stopping and allow regeneration after revisions. Only the current revision is shown as latest. |
 
-While Paused, only audio playback, the timeline, and Scene viewing are available. Supplementation input and mode changes are disabled, and **Supplement after stopping recording** or Resume is offered. After finishing, generation is possible from notes, Scenes, and annotations even without original audio or transcription. However, if there is no evidence for questions/requests, **Insufficient input: automatic question generation incomplete** is shown with supplementation actions. The base evidence output can be viewed as partial, but an empty prompt is never shown as a completed result.
+While Paused, only audio playback, timeline browsing, and Scene inspection are available. Disable revisions and mode changes, and offer **Revise After Recording** or Resume. After stopping, notes, scenes, and annotations can support generation without audio or a transcript. When intent evidence is insufficient, show **Insufficient Input: Automatic Question Generation Incomplete** and offer revision. Basic evidence output can be viewed as partial.
 
-Unresolved items support correct, confirm, and keep-unconfirmed, but unconfirmed content is never turned into definite statements. If transcription completes under the same snapshot and review revision, the same generation proceeds to its next step. If user supplementation changes the revision, the previous result is not shown as the latest success and is regenerated with the new revision. Automatic generation failure does not block reviewing originals and offers error, retry, and text supplementation. Screen readers must be able to access the same evidence through a sorted event list instead of the timeline's visual bars.
+Let users correct, confirm, or leave items unresolved. Keep unconfirmed items visibly unconfirmed. If transcription finishes for the same snapshot and review revision, proceed to the next stage in that generation. Edits require generation on the new revision and make old results stale. If automatic generation fails, keep original materials available and offer errors, retry, and text additions. Screen readers can use an ordered event list to access the same evidence as the visual timeline.
 
-Automatic generation right after Stop processes only up to local base materials and ready local engines. External stages are in the awaiting-review state, neither ready nor failed. intent_status values generated, user_authored, unavailable, and insufficient are shown readably. No engine or engine failure is unavailable/partial, and insufficient question evidence is insufficient/partial. After review, the sending history and actual scope are recorded, and the UI indicates that later supplementation does not retract previous sends.
+After Stop, automatic generation runs local base generation and configured local engines. External stages await review. Show readable intent_status values for generated, user_authored, unavailable, and insufficient. Missing or failed engines yield unavailable or partial. Missing question evidence yields insufficient or partial. Log the actual scope and history of transmissions after review. Inform users that later revisions cannot recall prior transmissions.
 
 <a id="promptpreview"></a>
 ## 10. PromptPreview
 
-Purpose: check the prompt text to deliver together with the actual attached assets. Entered from a ready/partial result for the current revision or by opening a saved generated copy. There is no button for sending to an external AI. [Navigation](navigation.md#delivery), [FR-05·FR-06·FR-07·FR-09](system-design-to-be.md#requirements).
+Inspect prompt text and actual attachments together. Enter from a ready or partial result for the current revision or by opening a saved generation. AI delivery happens outside this screen. [Navigation](navigation.md#delivery), [FR-05, FR-06, FR-07, FR-09](system-design-to-be.md#requirements).
 
 ```layout
 Screen V PromptHeader, PromptStateBanner, DeliveryProfile, PromptBody, DeliveryNotice, PromptActions, ExportResult
@@ -280,26 +280,26 @@ PromptActions > BackToReviewButton, RegenerateButton, CopyPromptButton, RevealAs
 ExportResult V ExportProgress, ExportLocation, ExportFileList, ExportError
 ```
 
-In a narrow window, AttachmentPane is stacked after PromptTextPane. The prompt body supports line wrapping and text selection and does not require horizontal scrolling. Even if the asset list moves down, DeliveryNotice and copy/export status stay close to the body.
+In narrow windows, stack AttachmentPane below PromptTextPane. Wrap prompt text and support text selection without horizontal scrolling. Keep DeliveryNotice and copy and export status near the text even when the asset list moves down.
 
 | Region | Display, input, and result |
 |---|---|
-| PromptRevision·PromptStateBanner | Current input and generated revision; latest, regeneration required, warning, failed. Opening a stale generated copy never shows it as latest |
-| PromptSections·PromptTextView | Goal, questions/change requests, Scene references, time evidence, and unconfirmed text built from the selected profile's DeliveryProjection. Applies the same redaction and metadata exclusion as copy/export. Original edits are done by returning to Review |
-| DeliveryProfile | Default **Delivery** and explicit **Include originals** options. Delivery includes composited frames and prompt/context/evidence and excludes original audio, original images, PID, window titles, and local absolute paths. Include originals indicates that pre-masking materials are included |
-| ActualAssetRows | Actual composited images, file identifiers, relative references, and inclusion/exclusion reasons for the selected profile. Target ID, effective time, and highlight of point/rect focus can be verified in composited images. Original assets are distinguished as local evidence views. Placeholders are never shown as actual attachments |
-| UnresolvedReferenceRows | Count and targets of missing or unconfirmed references. Selecting returns to the evidence in Review |
-| DeliveryNotice | **Copy copies text only. Attach images and audio separately to the AI you use.** |
-| CopyPromptButton | Copies only the currently permitted text from the same DeliveryProjection as Preview and export. The success notice is also limited to **Prompt text copied** |
-| RevealAssetsButton·ExportBundleButton | Show actual assets in Finder; create a verified bundle. Relative paths and manifest rules use the delivery contract |
-| ExportResult | Progress, actual successful path, included files, errors. The open-in-Finder action is enabled after path verification |
+| PromptRevision and PromptStateBanner | Show current input and generation revisions, current or regeneration-required status, warnings, and failures. Label old generations as stale. |
+| PromptSections and PromptTextView | The selected DeliveryProjection supplies intent, questions or change requests, Scene references, timing evidence, and unconfirmed text. Apply the same masking and metadata exclusions as copy and export. Return to Review to edit. |
+| DeliveryProfile | Choose the default **Delivery** or explicit **Include Originals**. Delivery includes composited frames, prompt, context, and evidence. It excludes original audio, source images, PID, window titles, and local absolute paths. Include Originals warns that it contains unmasked material. |
+| ActualAssetRows | Show the selected profile's actual images, file IDs, relative references, and inclusion or exclusion reasons. Show target ID, effective time, and highlighting for point or rectangle focus on composite images. Identify original assets as local evidence and placeholders as placeholders. |
+| UnresolvedReferenceRows | Show counts and targets of missing and unconfirmed references. Selecting a row returns to the evidence in Review. |
+| DeliveryNotice | **Copy includes text only. Attach images and audio separately in your AI tool.** |
+| CopyPromptButton | Copy only text allowed by the current DeliveryProjection shared with Preview and export. Announce **Prompt Text Copied**. |
+| RevealAssetsButton and ExportBundleButton | Reveal actual assets in Finder and create a verified bundle. Use the delivery contract for relative paths and manifests. |
+| ExportResult | Show progress, actual successful path, included files, and errors. Enable Reveal in Finder after validating the path. |
 
-When input changes, manual transcription, mode edits, or new supplementation invalidate the result, **Regeneration required** is shown at the top and in the action area. Copying the latest version and exporting with the prompt are disabled until a successful result for the current revision is ready. Missing assets, write failures, and insufficient storage show the affected file with retry and another location. Export success is never described as meaning the AI read the files or processed the question. VoiceOver announces copy success and the bundle path once and does not automatically read the entire long prompt.
+If edits, manual transcription, mode changes, or revisions invalidate a result, show **Regeneration Required** at the top and near the actions. Disable copying or exporting the prompt as current until generation succeeds for the current revision. For missing assets, write failure, or low space, identify affected files and offer retry or another location. Export success reports local files only. VoiceOver announces copy success or the bundle path once without reading the full prompt automatically.
 
 <a id="settings"></a>
 ## 11. Settings
 
-Purpose: check local input, permissions, transcription, storage, and shortcut settings. Opened from Library, Setup, or Toolbar; closing returns to the calling screen. [Navigation](navigation.md#recovery-settings), [FR-09](system-design-to-be.md#requirements).
+Check local input, permissions, transcription, storage, and shortcuts. Open from Library, Setup, or Toolbar and return there on close. [Navigation](navigation.md#recovery-settings), [FR-09](system-design-to-be.md#requirements).
 
 ```layout
 Screen V SettingsHeader, SettingsBody, SettingsStatus, SettingsActions
@@ -312,19 +312,19 @@ SettingsActions > RestoreDefaultsButton, CloseSettingsButton
 
 | Region | Display, input, and result |
 |---|---|
-| PermissionsSection | OS permission state for screen capture and microphone, and opening System Settings. Never changes permission values as if granted within the app |
-| AudioSection | Microphone device, default usage, and check. When no device exists, a clear "none" and a text-only explanation |
-| TranscriptionSection | Optional local transcription settings, model/language, unavailable/download-required/failed states. External providers and semantic organization providers are configured separately, showing possible sending scope, key management, and policy. Actual session upload is possible only after input review and explicit run in Review |
-| StorageSection | Local storage location, usage, default export location, read/write check results. Moving existing sessions is shown separately from the applied contract |
-| KeyboardSection | Shortcuts, conflicts, and active scope. Guidance on IME/text input protection and keyboard access paths |
-| CurrentSessionNotice·AvailabilityStatus | Applied to the current session, or **From the next session**. Settings that cannot change during recording are disabled with the reason |
+| PermissionsSection | Show actual OS permissions for screen capture and microphone and link to System Settings. The OS grants permissions. |
+| AudioSection | Show microphone device, defaults, and testing. Clearly indicate unavailable devices and describe text-only input. |
+| TranscriptionSection | Optional local transcription settings, model, language, unavailable state, download requirement, and failures. Configure external transcription and interpretation providers separately, with possible transmission scope, key management, and policies. Actual uploads require input review and explicit action in Review. |
+| StorageSection | Show local storage path, usage, default export destination, and read/write checks. Explain the contract and effect of moving existing sessions separately. |
+| KeyboardSection | Show shortcuts, conflicts, and activation scope. Explain IME and text input protection and keyboard access. |
+| CurrentSessionNotice and AvailabilityStatus | Show applied to current session or **Starting Next Session**. Disable settings that cannot change while recording and show the reason. |
 
-In a narrow window, the left list becomes a top selection menu and the settings body is shown vertically. Returning from System Settings re-checks the actual permissions and never shows success without permission. Voice recording and transcription availability are separated so that an unconfigured model or transcription failure does not look like recording is impossible app-wide. The screen + note flow remains usable even without microphone permission. Save failures and device list loading errors place error and retry only in the relevant section.
+In narrow windows, replace the left list with a selection menu above vertically arranged settings. Recheck actual permissions after returning from System Settings and report denied permissions accurately. Show recording and transcription availability separately. Screen capture plus notes remains available without microphone permission. Show save or device-list failures and retry actions in the affected section.
 
 <a id="recoverypanel"></a>
 ## 12. RecoveryPanel
 
-Purpose: recover verified local materials from sessions that did not finish, and check missing ranges. Entered from the app launch guard or the recovery notice in Library. Recovery success opens Review without automatically resuming recording. [Navigation](navigation.md#recovery-settings), [FR-08](system-design-to-be.md#requirements).
+Recover verified local data from unfinished sessions and inspect missing intervals. Enter from the startup guard or the library notice. Successful recovery opens Review with recording stopped. [Navigation](navigation.md#recovery-settings), [FR-08](system-design-to-be.md#requirements).
 
 ```layout
 Screen V RecoveryHeader, RecoveryBody, RecoveryStatus, RecoveryActions
@@ -337,18 +337,18 @@ RecoveryActions > RecoverSelectedButton, InspectFailureButton, LaterButton
 
 | Region | Display, input, and result |
 |---|---|
-| RecoverySessionRows | Session name, last saved time, abnormal termination indicator, recoverable state. Selectable by keyboard |
-| LastVerifiedPosition·AvailableAssets | Last verified point and the actual existing range of Scenes, events, and audio |
-| MissingRanges·RecoveryConsequences | Missing or incomplete intervals, and the readable/supplementable scope after recovery. Never assumes there is no loss |
-| RecoveryStatus | Checking or recovering, failure cause and retry. One session's failure does not block selecting other sessions |
-| RecoverSelectedButton·LaterButton | Recover the selected copy, or go to Library while keeping originals. Originals of failed recoveries are never deleted automatically |
+| RecoverySessionRows | Show session name, last save time, abnormal exit flag, and recoverability. Support keyboard selection. |
+| LastVerifiedPosition and AvailableAssets | Show the last verified position and actual availability of scenes, events, and audio. |
+| MissingRanges and RecoveryConsequences | Show missing or incomplete intervals and what can be read or revised after recovery. Report loss based on verification. |
+| RecoveryStatus | Show inspection and recovery progress, failure reason, and retry. A failure in one session leaves other sessions selectable. |
+| RecoverSelectedButton and LaterButton | Recover the selected session or return to Library and preserve originals. Originals are retained after recovery failure. |
 
-If the recovery target has disappeared, an empty state and Back to Library are shown. A recovery check failure is never presented as an empty-list success. When narrow, details are stacked after the session list. Recovery progress and completion are read out as status announcements, and missing items are provided as an ordered list. After recovery, the prompt must be regenerated with the actual recovered revision, and past successful copies are not treated as latest.
+If recoverable items disappear, show an empty state and a path back to Library. Report inspection failures separately from empty results. Stack details below the session list in narrow windows. Announce progress and completion, and list missing items in order. Regenerate the prompt for the actual recovered revision and mark earlier generations stale.
 
-## 13. Static review and unverified scope
+## 13. Static review and remaining verification
 
-Each `layout` is written as a tree with a single root, reviewed so that within the same block there are no duplicate container definitions, multiple parents, cycles, or excess horizontal weights. The 11 screens in Navigation are cross-checked against the 11 identifiers in this document. This document defines target interactions, errors, empty values, permissions, keyboard, and narrow-window states, and is not a record of completed responsive or accessibility verification of the actual app.
+Each `layout` is a single-root tree. Check for duplicate containers, multiple parents, cycles, and excessive horizontal weights within each block. Cross-check all 11 navigation screens against the 11 layout identifiers. This design specifies intended interactions, errors, empty states, permissions, keyboard access, and narrow-window behavior. Runtime responsive and accessibility verification is pending.
 
-Paths to verify first during implementation: first-capture permission denial, window disappearing during capture, text-only start, microphone start failure and device loss, Stop during IME composition, Pause review and supplementation prohibition, past Scene viewing and explicit target switching, long-held focus, no/failed transcription, previous compile completing during supplementation, missing assets and export failure, and abnormal termination recovery. Verification acceptance criteria follow the [Core verification plan](system-design-to-be.md#verification).
+Prioritize first capture permission denial, a window disappearing during capture, text-only startup, microphone start failure and device loss, Stop during Korean IME composition, paused read-only review, viewing earlier scenes and explicitly switching targets, long-held focus, unavailable or failed transcription, stale compilation finishing during a revision, missing assets and export failure, and crash recovery. Use the acceptance criteria in the [verification plan](system-design-to-be.md#verification).
 
-2026-10-31 static check: the 15 layout blocks were checked for single root, duplicate parents, cycles, duplicate containers, and horizontal weights, along with the 11 screen anchors, with 0 structural errors. The link and anchor check of the two UI files was FAIL 0, WARN 0. Renderer conversion and verification of actual window sizes, VoiceOver, and IME behavior were not part of this check.
+Static review on 2026-10-31 checked 15 layout blocks for one root, multiple parents, cycles, duplicate containers, and horizontal weights, and checked all 11 screen anchors. It found zero structural errors. Link and anchor checks across both UI documents reported FAIL 0 and WARN 0. Renderer conversion, actual window sizes, VoiceOver, and IME behavior were outside that check.

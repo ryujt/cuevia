@@ -1,11 +1,11 @@
 # Macro Job Flow
 
-This view treats Cuevia as a single system. Internal modules are in the [app internal flow](cuevia-app.md), and contracts are in the [design document](../system-design-to-be.md#contracts). A `message` is a logical request, response, or notification; it does not imply a network or message broker. Success, cancellation, and failure responses to the same request are alternative outcomes.
+This flow treats Cuevia as a single system. See the [internal app flow](cuevia-app.md) for modules and the [design](../system-design-to-be.md#contracts) for contracts. A `message` represents a logical request, response, or notification. It implies neither a network nor a message broker. Success, cancellation, and failure are alternative outcomes of the same request.
 
-## 1. Select a screen and record an explanation
+## 1. Select a capture source and record an explanation
 
 ```jobflow
-scope: Recording collaboration between the user, Cuevia, and macOS
+scope: Recording interactions among the user, Cuevia, and macOS
 Object: User, Cuevia, MacOS
 User.OnPrepare --> Cuevia.message.PrepareRequest
 Cuevia.message.PrepareRequest --> MacOS.message.SelectCaptureRequest
@@ -27,15 +27,15 @@ User.OnStop --> Cuevia.message.StopRequest
 Cuevia.message.StopRequest --> User.message.SourceSaved
 ```
 
-- PrepareRequest handles target selection and the first capture. On cancellation or error, recording does not start. Text mode without a microphone is an alternative path in which StartRequest responds directly with RecordingStarted.
-- StartMicrophoneRequest includes the permission check and device start. `MicrophoneReady` is the start response; continuous buffer delivery afterwards belongs to the internal flow. A permission failure is never turned into a recording success.
-- InputCommand covers pointing, annotation, notes, new captures, and pause/resume commands. Actual persistence is distinguished from transient UI display.
-- SourceSaved is the result of sealing the source. Transcription and prompt completion notifications are separate contracts in the next scenario. A save error responds with SourceSaveFailed and moves to recovery of the data already secured.
+- PrepareRequest selects the source and prepares the first capture. Cancellation or failure leaves recording stopped. In text mode, StartRequest can return RecordingStarted directly without a microphone.
+- StartMicrophoneRequest checks permission and starts the device. `MicrophoneReady` is the start response. The internal flow covers subsequent buffers. Permission failure prevents voice recording from starting.
+- InputCommand covers pointing, annotation, notes, new captures, pause, and resume. The UI distinguishes transient input from committed data.
+- SourceSaved reports sealed originals. Transcription and prompt completion belong to the next scenario. A save error returns SourceSaveFailed and moves to recovery of available material.
 
-## 2. Automatic prompt generation after stop, and partial failure
+## 2. Generate a prompt automatically after stopping
 
 ```jobflow
-scope: Prompt generation and optional external processing after the source is saved
+scope: Prompt generation after source save and optional external processing
 Object: User, Cuevia, ProcessingProvider
 Cuevia.OnSourceSealed --> Cuevia.message.CompileRequest
 Cuevia.message.CompileRequest --> User.message.CompileAccepted
@@ -52,12 +52,12 @@ Cuevia.message.ReviseRequest --> User.message.GenerationStale
 User.OnRegenerate --> Cuevia.message.CompileRequest
 ```
 
-- After the source is saved, Cuevia compiles automatically. If no external processing is configured, there is no external request and generation uses only local adapters or the inputs. If external processing is needed, it waits in awaiting_input_review and asks the user to review the inputs that will actually be sent. ExternalProcessingRequest is valid only for the exact review revision and scope hash the user reviewed, and the original audio for ASR and the inputs for semantic summarization are confirmed per stage. ProcessingProvider is the external boundary abstracting the configured ASR and semantic summarization providers.
-- CompileAccepted means the job was accepted. PromptReady/Partial/Failed are completion notifications carrying a job ID and source/review revision. A late response after completion, cancellation, or timeout never completes a different job.
-- Even when transcription or semantic summarization fails, a base evidence prompt can still be produced. If the required question/request input is missing, the user is notified with PromptPartial and the reason for the omission is also written into the body.
-- When the user revises, previous results become stale. Results are published only for the same input revision. Only post-processing is retried; the source is never re-recorded.
+- Cuevia compiles automatically after saving the source. With no external processing configured, it uses a local adapter or the source inputs alone. If an external stage is needed, it waits in awaiting_input_review for review of the exact input to send. ExternalProcessingRequest is valid only for the reviewed revision and scope hash. ASR audio and interpretation inputs are reviewed separately. ProcessingProvider represents the configured external ASR or interpretation provider.
+- CompileAccepted acknowledges the job. PromptReady/Partial/Failed report completion with a job ID and source and review revisions. Responses arriving after completion, cancellation, or timeout cannot complete another job.
+- Transcription or interpretation failures can still yield a basic evidence prompt. Missing inputs for a question or request produce PromptPartial, with the reason in the output.
+- User edits make prior results stale. Publish only to the same input revision. Retry post-processing without recording the source again.
 
-## 3. Deliver the reviewed result as real files
+## 3. Deliver the reviewed result as files
 
 ```jobflow
 scope: User review and creation of delivery materials
@@ -72,6 +72,6 @@ User.OnCopyPrompt --> Cuevia.message.CopyPromptRequest
 Cuevia.message.CopyPromptRequest --> User.message.TextCopiedWithAttachmentList
 ```
 
-- ExportRequest includes the latest generation revision, the delivery or source-included profile, and the destination path. BundleReady is announced after file verification and manifest finalization.
-- CopyPrompt copies text only. TextCopiedWithAttachmentList does not mean images were sent or attached.
-- The user pastes the materials into the AI tool of their choice and attaches the files. Sending directly to an AI is out of scope for the first version, so there is no automatic Cuevia→AI arrow.
+- ExportRequest includes the latest generation revision, the delivery or originals-included profile, and a destination. Send BundleReady after verifying files and committing the manifest.
+- CopyPrompt copies text only. TextCopiedWithAttachmentList reports copied text and an attachment list. Image transfer and attachment remain user actions.
+- The user pastes the materials into their chosen AI tool and attaches files. Automatic transfer from Cuevia to AI is outside the first release.
