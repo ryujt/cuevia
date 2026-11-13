@@ -19,7 +19,7 @@ char *cuevia_copy_sources(void) {
    size_t width=mode?CGDisplayModeGetPixelWidth(mode):CGDisplayPixelsWide(display);
    size_t height=mode?CGDisplayModeGetPixelHeight(mode):CGDisplayPixelsHigh(display);
    BOOL builtIn=CGDisplayIsBuiltin(display),main=CGDisplayIsMain(display);
-   NSString *name=builtIn?@"내장 디스플레이":[NSString stringWithFormat:@"외장 모니터 %u",i+1];
+   NSString *name=builtIn?@"Built-in display":[NSString stringWithFormat:@"External monitor %u",i+1];
    [monitors addObject:@{@"id":[NSString stringWithFormat:@"display-%u",display],@"kind":@"monitor",@"name":name,@"displayId":@(display),@"displayIndex":@(i+1),@"width":@(width),@"height":@(height),@"scale":@(bounds.size.width?width/bounds.size.width:1),@"builtIn":@(builtIn),@"main":@(main),@"x":@(bounds.origin.x),@"y":@(bounds.origin.y)}];
    if(mode)CGDisplayModeRelease(mode);
   }
@@ -33,7 +33,7 @@ char *cuevia_copy_sources(void) {
    CGRect bounds=CGRectZero;
    CGRectMakeWithDictionaryRepresentation((__bridge CFDictionaryRef)window[(id)kCGWindowBounds],&bounds);
    if(bounds.size.width<80||bounds.size.height<50)continue;
-   NSString *name=window[(id)kCGWindowOwnerName]?:@"프로그램";
+   NSString *name=window[(id)kCGWindowOwnerName]?:@"App";
    NSString *title=window[(id)kCGWindowName]?:@"";
    [programs addObject:@{@"id":[NSString stringWithFormat:@"window-%@",wid],@"kind":@"program",@"name":name,@"title":title,@"pid":pid,@"windowId":wid,@"width":@((int)bounds.size.width),@"height":@((int)bounds.size.height),@"x":@(bounds.origin.x),@"y":@(bounds.origin.y)}];
   }

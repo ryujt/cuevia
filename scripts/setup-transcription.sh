@@ -72,7 +72,7 @@ if [ ! -x "$install_dir/bin/whisper-cli" ]; then
 fi
 
 if ! verify_model "$install_dir/models/ggml-base.bin"; then
-  printf '%s\n' 'Downloading multilingual Whisper base model (142 MiB; supports Korean)…'
+  printf '%s\n' 'Downloading multilingual Whisper base model (142 MiB; supports English and other languages)…'
   curl --fail --location --retry 2 --connect-timeout 20 --max-time 600 \
     'https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-base.bin' \
     --output "$work_dir/ggml-base.bin"
@@ -84,5 +84,5 @@ if ! verify_model "$install_dir/models/ggml-base.bin"; then
 fi
 
 "$install_dir/bin/whisper-cli" --help >/dev/null 2>&1
-printf '\n%s\n%s\n' 'Offline Korean transcription is ready. Run go run .' \
+printf '\n%s\n%s\n' 'Offline transcription is ready. Run go run .' \
   'Audio stays on this computer. No API key or transcription service is used.'

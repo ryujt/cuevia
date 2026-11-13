@@ -105,16 +105,16 @@ try {
     $tray.Icon = $icon
     $tray.Text = 'Cuevia - Ctrl+Alt+S'
     $menu = [Windows.Forms.ContextMenuStrip]::new()
-    $capture = $menu.Items.Add('캡처 시작 (Ctrl+Alt+S)')
+    $capture = $menu.Items.Add('Capture (Ctrl+Alt+S)')
     $capture.add_Click({ Start-CueviaCapture })
-    $open = $menu.Items.Add('Cuevia 열기')
+    $open = $menu.Items.Add('Open Cuevia')
     $open.add_Click({ Open-CueviaExternal $baseUrl })
-    $settings = $menu.Items.Add('설정')
+    $settings = $menu.Items.Add('Settings')
     $settings.add_Click({ Open-CueviaExternal "$baseUrl/?settings" })
-    $guide = $menu.Items.Add('설치 안내')
+    $guide = $menu.Items.Add('Install guide')
     $guide.add_Click({ Open-CueviaExternal (Join-Path $PSScriptRoot 'INSTALL.txt') })
     [void]$menu.Items.Add([Windows.Forms.ToolStripSeparator]::new())
-    $quit = $menu.Items.Add('프로그램 종료')
+    $quit = $menu.Items.Add('Quit')
     $quit.add_Click({ $context.ExitThread() })
     $tray.ContextMenuStrip = $menu
     $tray.add_DoubleClick({ Start-CueviaCapture })
@@ -123,7 +123,7 @@ try {
     $hotkey.add_CaptureRequested({ Start-CueviaCapture })
     $hotkey.add_ExitRequested({ $context.ExitThread() })
     if (-not $hotkey.Registered) {
-        $capture.Text = '캡처 시작 (단축키 사용 불가)'
+        $capture.Text = 'Capture (shortcut unavailable)'
         $tray.Text = 'Cuevia - use tray to capture'
     }
     $timer = [Windows.Forms.Timer]::new()

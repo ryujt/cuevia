@@ -160,7 +160,7 @@ test('supported source-order numbers exclude legacy pen while hidden marks keep 
   const annotations = [
     {id: 'legacy-pen', type: 'pen', points: [{x: .1, y: .1}, {x: .9, y: .9}]},
     {id: 'hidden-point', type: 'point', x: .1, y: .2, hidden: true},
-    {id: 'arrow', type: 'arrow', x: .3, y: .4, x2: .5, y2: .6, label: '가리킨 위치'},
+    {id: 'arrow', type: 'arrow', x: .3, y: .4, x2: .5, y2: .6, label: 'Pointed location'},
     {id: 'legacy-pen-two', type: 'pen', x: .2, y: .3},
     {id: 'rectangle', type: 'rect', x: .6, y: .6, w: .2, h: .2},
     {id: 'legacy-point', x: .8, y: .3},

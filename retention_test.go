@@ -13,7 +13,7 @@ import (
 
 func retentionSession(t *testing.T, store *SessionStore, id string, savedAt time.Time) string {
 	t.Helper()
-	raw, err := json.Marshal(map[string]any{"id": id, "title": "보존 기간 검사", "scenes": []any{map[string]any{"id": "scene-retention", "annotations": []any{}}}, "transcript": []any{}})
+	raw, err := json.Marshal(map[string]any{"id": id, "title": "Retention check", "scenes": []any{map[string]any{"id": "scene-retention", "annotations": []any{}}}, "transcript": []any{}})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -190,7 +190,7 @@ func retentionMaterial(t *testing.T, root, date, leaf string, created time.Time)
 	if err := os.MkdirAll(dir, 0700); err != nil {
 		t.Fatal(err)
 	}
-	raw := json.RawMessage(`{"id":"session-material","title":"자료","scenes":[],"transcript":[]}`)
+	raw := json.RawMessage(`{"id":"session-material","title":"Materials","scenes":[],"transcript":[]}`)
 	data, err := json.Marshal(struct {
 		SessionSnapshot
 		CreatedAt time.Time `json:"createdAt"`

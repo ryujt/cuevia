@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="760" viewBox="0 0 1200 760" fill="none">
-  <title>Orbit 워크스페이스 설정</title>
-  <desc>Design team 워크스페이스의 일반 설정과 알림 설정 화면</desc>
+  <title>Orbit workspace settings</title>
+  <desc>General and notification settings for the Design team workspace</desc>
   <style>
     text{font-family:-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Noto Sans KR',Arial,sans-serif;fill:#272933} .muted{fill:#8A8D99}.small{font-size:12px}.label{font-size:13px;font-weight:600}.nav{font-size:13px}.stroke{stroke:#A0A3AD;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
   </style>
@@ -12,29 +12,29 @@
   <rect x="27" y="100" width="25" height="25" rx="6" fill="#E1E1EF"/><text x="34" y="117" style="fill:#65619E" font-size="12" font-weight="700">D</text>
   <text x="62" y="109" font-size="10" class="muted">WORKSPACE</text><text x="62" y="124" font-size="12" font-weight="600">Design team</text><path d="m157 109 4 4-4 4" class="stroke"/>
   <text x="26" y="171" font-size="10" letter-spacing="1.3" font-weight="600" class="muted">WORKSPACE</text>
-  <g class="stroke"><rect x="27" y="193" width="6" height="6" rx="1"/><rect x="37" y="193" width="6" height="6" rx="1"/><rect x="27" y="203" width="6" height="6" rx="1"/><rect x="37" y="203" width="6" height="6" rx="1"/></g><text x="55" y="206" class="nav" style="fill:#656874">개요</text>
-  <g class="stroke"><path d="M27 237h6l2 3h9v12H27Z"/></g><text x="55" y="250" class="nav" style="fill:#656874">프로젝트</text><text x="152" y="250" font-size="11" class="muted">12</text>
-  <g class="stroke"><path d="M27 286v-5a8 8 0 0 1 16 0v5M25 286h20M30 291h10"/><path d="M33 294h4"/></g><text x="55" y="292" class="nav" style="fill:#656874">알림</text><circle cx="155" cy="287" r="3" fill="#7C79BB"/>
+  <g class="stroke"><rect x="27" y="193" width="6" height="6" rx="1"/><rect x="37" y="193" width="6" height="6" rx="1"/><rect x="27" y="203" width="6" height="6" rx="1"/><rect x="37" y="203" width="6" height="6" rx="1"/></g><text x="55" y="206" class="nav" style="fill:#656874">Overview</text>
+  <g class="stroke"><path d="M27 237h6l2 3h9v12H27Z"/></g><text x="55" y="250" class="nav" style="fill:#656874">Projects</text><text x="152" y="250" font-size="11" class="muted">12</text>
+  <g class="stroke"><path d="M27 286v-5a8 8 0 0 1 16 0v5M25 286h20M30 291h10"/><path d="M33 294h4"/></g><text x="55" y="292" class="nav" style="fill:#656874">Notifications</text><circle cx="155" cy="287" r="3" fill="#7C79BB"/>
   <path d="M24 320H166" stroke="#ECEEF2"/>
   <rect x="16" y="339" width="158" height="39" rx="6" fill="#EFEEF8"/>
-  <g stroke="#726EAD" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m36 348 2 3 3 .5.6 3.3 2.4 2.2-1.5 3-3.3.6-2.2 2.4-3-1.5-.6-3.3-2.4-2.2 1.5-3 3.3-.6Z"/><circle cx="36" cy="356" r="2.7"/></g><text x="55" y="363" class="nav" font-weight="600" style="fill:#69649E">설정</text>
-  <g class="stroke"><rect x="27" y="395" width="17" height="13" rx="2"/><path d="M27 399h17"/></g><text x="55" y="407" class="nav" style="fill:#656874">요금 및 결제</text>
-  <g class="stroke"><circle cx="35" cy="661" r="8"/><path d="M33 658a2.4 2.4 0 1 1 4 1.8c-1 .6-2 1.1-2 2.2M35 665h.01"/></g><text x="55" y="665" class="nav" style="fill:#656874">도움말 및 지원</text><path d="M16 691H174" stroke="#ECEEF2"/>
-  <circle cx="36" cy="723" r="14" fill="#ECE7E2"/><text x="28" y="727" font-size="10" font-weight="600" style="fill:#8A7769">JK</text><text x="59" y="720" font-size="12" font-weight="600">김지우</text><text x="59" y="736" font-size="10" class="muted">워크스페이스 관리자</text><path d="m158 721 3 3-3 3" class="stroke"/>
-  <text x="220" y="42" font-size="13" style="fill:#818490">워크스페이스</text><path d="m309 31 5 5-5 5" stroke="#B7BAC2" stroke-width="1.4"/><text x="329" y="42" font-size="13" font-weight="500">설정</text>
+  <g stroke="#726EAD" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m36 348 2 3 3 .5.6 3.3 2.4 2.2-1.5 3-3.3.6-2.2 2.4-3-1.5-.6-3.3-2.4-2.2 1.5-3 3.3-.6Z"/><circle cx="36" cy="356" r="2.7"/></g><text x="55" y="363" class="nav" font-weight="600" style="fill:#69649E">Settings</text>
+  <g class="stroke"><rect x="27" y="395" width="17" height="13" rx="2"/><path d="M27 399h17"/></g><text x="55" y="407" class="nav" style="fill:#656874">Billing</text>
+  <g class="stroke"><circle cx="35" cy="661" r="8"/><path d="M33 658a2.4 2.4 0 1 1 4 1.8c-1 .6-2 1.1-2 2.2M35 665h.01"/></g><text x="55" y="665" class="nav" style="fill:#656874">Help &amp; support</text><path d="M16 691H174" stroke="#ECEEF2"/>
+  <circle cx="36" cy="723" r="14" fill="#ECE7E2"/><text x="28" y="727" font-size="10" font-weight="600" style="fill:#8A7769">JK</text><text x="59" y="720" font-size="12" font-weight="600">Jiwoo Kim</text><text x="59" y="736" font-size="10" class="muted">Workspace admin</text><path d="m158 721 3 3-3 3" class="stroke"/>
+  <text x="220" y="42" font-size="13" style="fill:#818490">Workspace</text><path d="m309 31 5 5-5 5" stroke="#B7BAC2" stroke-width="1.4"/><text x="329" y="42" font-size="13" font-weight="500">Settings</text>
   <g class="stroke"><circle cx="1046" cy="34" r="6.5"/><path d="m1051 39 4 4"/><path d="M1090 39v-6a6 6 0 1 1 12 0v6l2 3h-16l2-3M1094 45h4"/></g><circle cx="1101" cy="27" r="3" fill="#7C79BB" stroke="#FFF" stroke-width="2"/><circle cx="1155" cy="35" r="15" fill="#ECE7E2"/><text x="1147" y="39" font-size="10" font-weight="600" style="fill:#8A7769">JK</text>
-  <text x="244" y="125" font-size="25" font-weight="700" letter-spacing="-.8">워크스페이스 설정</text><text x="245" y="152" font-size="13" style="fill:#858894">팀의 기본 정보와 협업 환경을 관리하세요.</text>
-  <text x="247" y="204" font-size="13" font-weight="600" style="fill:#69649E">일반</text><text x="309" y="204" font-size="13" style="fill:#858894">멤버</text><text x="371" y="204" font-size="13" style="fill:#858894">알림</text><path d="M244 221.5H1145" stroke="#E2E5EB"/><path d="M244 221.5h30" stroke="#7771B2" stroke-width="2.5"/>
+  <text x="244" y="125" font-size="25" font-weight="700" letter-spacing="-.8">Workspace settings</text><text x="245" y="152" font-size="13" style="fill:#858894">Manage your team's basic info and collaboration settings.</text>
+  <text x="247" y="204" font-size="13" font-weight="600" style="fill:#69649E">General</text><text x="325" y="204" font-size="13" style="fill:#858894">Members</text><text x="410" y="204" font-size="13" style="fill:#858894">Notifications</text><path d="M244 221.5H1145" stroke="#E2E5EB"/><path d="M244 221.5h51" stroke="#7771B2" stroke-width="2.5"/>
   <rect x="244" y="246" width="838" height="177" rx="9" fill="#FFF" stroke="#E5E7ED"/>
-  <text x="269" y="278" font-size="14" font-weight="600">기본 정보</text><text x="269" y="300" font-size="12" class="muted">워크스페이스 이름과 고유 주소를 설정합니다.</text>
-  <text x="269" y="337" class="label">워크스페이스 이름</text><text x="668" y="337" class="label">워크스페이스 URL</text>
+  <text x="269" y="278" font-size="14" font-weight="600">Basic info</text><text x="269" y="300" font-size="12" class="muted">Set your workspace name and unique URL.</text>
+  <text x="269" y="337" class="label">Workspace name</text><text x="668" y="337" class="label">Workspace URL</text>
   <rect x="269" y="350" width="365" height="43" rx="6" fill="#FFF" stroke="#DDE0E7"/><text x="283" y="377" font-size="13">Design team</text>
   <rect x="668" y="350" width="389" height="43" rx="6" fill="#FFF" stroke="#DDE0E7"/><text x="682" y="377" font-size="13" class="muted">orbit.so/</text><text x="734" y="377" font-size="13">design-team</text><path d="m1032 370 3 3 6-7" stroke="#8E94A3" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
   <rect x="244" y="445" width="838" height="139" rx="9" fill="#FFF" stroke="#E5E7ED"/>
-  <text x="269" y="477" font-size="14" font-weight="600">알림 설정</text><text x="269" y="499" font-size="12" class="muted">팀 활동에 대한 소식을 받아보세요.</text>
-  <path d="M269 518.5H1057" stroke="#ECEEF2"/><text x="269" y="548" font-size="13" font-weight="500">이메일 알림</text><text x="269" y="567" font-size="11" class="muted">댓글, 멘션 및 프로젝트 업데이트를 이메일로 받습니다.</text><rect x="1019" y="538" width="37" height="22" rx="11" fill="#7771B2"/><circle cx="1045" cy="549" r="8" fill="#FFF"/>
-  <text x="245" y="628" font-size="11" style="fill:#9A9DA7">마지막 수정: 오늘 오전 10:24</text>
-  <rect x="823" y="604" width="66" height="38" rx="6" fill="#FFF" stroke="#DDE0E7"/><text x="844" y="628" font-size="12" font-weight="500" style="fill:#767986">취소</text>
-  <rect x="901" y="604" width="68" height="38" rx="6" fill="#716BA9"/><text x="923" y="628" font-size="12" font-weight="600" style="fill:#FFF">저장</text>
-  <text x="244" y="704" font-size="11" style="fill:#A0A3AD">팀의 모든 변화가, 한곳에서.</text><text x="1047" y="704" font-size="10" style="fill:#B1B4BE">Orbit © 2026</text>
+  <text x="269" y="477" font-size="14" font-weight="600">Notification settings</text><text x="269" y="499" font-size="12" class="muted">Get updates on team activity.</text>
+  <path d="M269 518.5H1057" stroke="#ECEEF2"/><text x="269" y="548" font-size="13" font-weight="500">Email notifications</text><text x="269" y="567" font-size="11" class="muted">Get comments, mentions, and project updates by email.</text><rect x="1019" y="538" width="37" height="22" rx="11" fill="#7771B2"/><circle cx="1045" cy="549" r="8" fill="#FFF"/>
+  <text x="245" y="628" font-size="11" style="fill:#9A9DA7">Last edited: today at 10:24 AM</text>
+  <rect x="823" y="604" width="66" height="38" rx="6" fill="#FFF" stroke="#DDE0E7"/><text x="837" y="628" font-size="12" font-weight="500" style="fill:#767986">Cancel</text>
+  <rect x="901" y="604" width="68" height="38" rx="6" fill="#716BA9"/><text x="921" y="628" font-size="12" font-weight="600" style="fill:#FFF">Save</text>
+  <text x="244" y="704" font-size="11" style="fill:#A0A3AD">Every team change, in one place.</text><text x="1047" y="704" font-size="10" style="fill:#B1B4BE">Orbit © 2026</text>
 </svg>

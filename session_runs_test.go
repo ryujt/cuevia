@@ -17,10 +17,10 @@ import (
 func runTestDocument(t *testing.T, content bool) map[string]any {
 	t.Helper()
 	var document map[string]any
-	if err := json.Unmarshal(sessionTestJSON("독립 실행 기록"), &document); err != nil {
+	if err := json.Unmarshal(sessionTestJSON("Independent run record"), &document); err != nil {
 		t.Fatal(err)
 	}
-	document["project"] = "보존할 프로젝트"
+	document["project"] = "Project to keep"
 	document["mode"] = "mixed"
 	document["notes"] = ""
 	if !content {
@@ -44,12 +44,12 @@ func TestStartRunArchivesPreviousAndCopiesOnlySelectedDurableCapture(t *testing.
 	store, dir, original := sessionTestStore(t)
 	document := runTestDocument(t, true)
 	document["runMode"], document["runVersion"], document["runState"] = "audio", 3, "ended"
-	document["elapsedMs"], document["duration"], document["notes"] = 1250.5, 1.25, "이전 메모"
+	document["elapsedMs"], document["duration"], document["notes"] = 1250.5, 1.25, "Previous note"
 	selected := document["scenes"].([]any)[0].(map[string]any)
-	selected["annotations"], selected["materialAlias"], selected["capturedAt"], selected["note"] = []any{map[string]any{"x": .2}}, "S09", 42, "이전 화면 메모"
-	other := map[string]any{"id": "scene-other", "captureId": strings.Repeat("a", 32), "note": "옮기면 안 되는 화면"}
+	selected["annotations"], selected["materialAlias"], selected["capturedAt"], selected["note"] = []any{map[string]any{"x": .2}}, "S09", 42, "Previous screen note"
+	other := map[string]any{"id": "scene-other", "captureId": strings.Repeat("a", 32), "note": "Screen that must not move"}
 	document["scenes"] = append(document["scenes"].([]any), other)
-	draft := json.RawMessage(`{"noteDraft":"이전 초안"}`)
+	draft := json.RawMessage(`{"noteDraft":"Previous draft"}`)
 	before, err := store.Save("session-real", 0, sessionTestMarshal(t, document), draft)
 	if err != nil {
 		t.Fatal(err)
@@ -79,7 +79,7 @@ func TestStartRunArchivesPreviousAndCopiesOnlySelectedDurableCapture(t *testing.
 	}
 	fresh := runTestRead(t, next)
 	nextID, _ := fresh["id"].(string)
-	if nextID == "session-real" || nextID == "" || next.Revision != 1 || next.ArchivedAt != nil || len(next.Audio) != 0 || fresh["runVersion"] != float64(4) || fresh["previousRunId"] != "session-real" || fresh["runMode"] != "audio" || fresh["runState"] != "ready" || fresh["elapsedMs"] != float64(0) || fresh["duration"] != float64(0) || fresh["notes"] != "" || fresh["prompt"] != "" || fresh["project"] != "보존할 프로젝트" || len(fresh["transcript"].([]any)) != 0 || len(fresh["sceneSelections"].([]any)) != 0 {
+	if nextID == "session-real" || nextID == "" || next.Revision != 1 || next.ArchivedAt != nil || len(next.Audio) != 0 || fresh["runVersion"] != float64(4) || fresh["previousRunId"] != "session-real" || fresh["runMode"] != "audio" || fresh["runState"] != "ready" || fresh["elapsedMs"] != float64(0) || fresh["duration"] != float64(0) || fresh["notes"] != "" || fresh["prompt"] != "" || fresh["project"] != "Project to keep" || len(fresh["transcript"].([]any)) != 0 || len(fresh["sceneSelections"].([]any)) != 0 {
 		t.Fatalf("new run inherited previous content: %s", next.Session)
 	}
 	scenes := fresh["scenes"].([]any)
@@ -192,7 +192,7 @@ func TestStartRunReusesEmptyDraftAndReadyVersionWithoutCreatingEmptyArchives(t *
 		t.Fatalf("ready capture context was archived: %+v %v", snapshot, err)
 	}
 	active := runTestRead(t, snapshot)
-	active["transcript"] = []any{map[string]any{"id": "note-general", "sceneId": nil, "text": "화면 없는 기록", "kind": "note", "startMs": 500}}
+	active["transcript"] = []any{map[string]any{"id": "note-general", "sceneId": nil, "text": "Entry without a screen", "kind": "note", "startMs": 500}}
 	active["runState"] = "ended"
 	if _, err := store.Save("session-real", 6, sessionTestMarshal(t, active), nil); err != nil {
 		t.Fatal(err)
@@ -205,7 +205,7 @@ func TestStartRunReusesEmptyDraftAndReadyVersionWithoutCreatingEmptyArchives(t *
 
 func TestStartRunValidationAndConcurrentRequestsDoNotDuplicateVersions(t *testing.T) {
 	store, _, _ := sessionTestStore(t)
-	before, err := store.Save("session-real", 0, sessionTestJSON("경합"), nil)
+	before, err := store.Save("session-real", 0, sessionTestJSON("Race"), nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -295,7 +295,7 @@ func TestStartRunCrashRecoveryCompletesOnlyMatchingParentRevision(t *testing.T) 
 	for _, stage := range []string{"before-archive", "after-archive", "newer-parent"} {
 		t.Run(stage, func(t *testing.T) {
 			store, dir, _ := sessionTestStore(t)
-			before, err := store.Save("session-real", 0, sessionTestJSON("중단 복구"), nil)
+			before, err := store.Save("session-real", 0, sessionTestJSON("Interrupt recovery"), nil)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -320,7 +320,7 @@ func TestStartRunCrashRecoveryCompletesOnlyMatchingParentRevision(t *testing.T) 
 				_, _ = store.StartRun("session-real", 1, "audio", runTestString("scene-real"))
 			}()
 			if stage == "newer-parent" {
-				if _, err := store.Save("session-real", 1, sessionTestJSON("중단 뒤 더 최근 저장"), nil); err != nil {
+				if _, err := store.Save("session-real", 1, sessionTestJSON("Newer save after interrupt"), nil); err != nil {
 					t.Fatal(err)
 				}
 			}
@@ -362,12 +362,12 @@ func TestGeneralNotesAndAudioMaterializeWithoutCaptures(t *testing.T) {
 			store, _, _ := sessionTestStore(t)
 			document := runTestDocument(t, false)
 			document["scenes"] = []any{}
-			document["prompt"] = "# 일반 기록\n\n세부 기록: `session.json`."
+			document["prompt"] = "# General record\n\nFull record: `session.json`."
 			if source == "text" {
-				document["transcript"] = []any{map[string]any{"id": "note-no-scene", "sceneId": nil, "text": "화면 없는 텍스트 기록", "kind": "note"}}
+				document["transcript"] = []any{map[string]any{"id": "note-no-scene", "sceneId": nil, "text": "Text entry without a screen", "kind": "note"}}
 			}
 			if source == "notes" {
-				document["notes"] = "화면 없는 전체 메모"
+				document["notes"] = "General note without a screen"
 			}
 			if _, err := store.Save("session-real", 0, sessionTestMarshal(t, document), nil); err != nil {
 				t.Fatal(err)
@@ -403,7 +403,7 @@ func TestGeneralNotesAndAudioMaterializeWithoutCaptures(t *testing.T) {
 
 func TestRunHTTPRoutesReturnSummariesAndRejectArchivedWrites(t *testing.T) {
 	store, _, _ := sessionTestStore(t)
-	if _, err := store.Save("session-real", 0, sessionTestJSON("HTTP 버전"), nil); err != nil {
+	if _, err := store.Save("session-real", 0, sessionTestJSON("HTTP version"), nil); err != nil {
 		t.Fatal(err)
 	}
 	mux := http.NewServeMux()
@@ -440,7 +440,7 @@ func TestRunHTTPRoutesReturnSummariesAndRejectArchivedWrites(t *testing.T) {
 	for _, methodPath := range [][2]string{{"POST", "/api/session/session-real/runs"}, {"PUT", "/api/session/session-real"}} {
 		body := `{"revision":1,"mode":"audio"}`
 		if methodPath[0] == "PUT" {
-			body = fmt.Sprintf(`{"revision":1,"session":%s}`, sessionTestJSON("쓰기 금지"))
+			body = fmt.Sprintf(`{"revision":1,"session":%s}`, sessionTestJSON("Read only"))
 		}
 		if w := request(methodPath[0], methodPath[1], body, ""); w.Code != 409 || !strings.Contains(w.Body.String(), "session_archived") {
 			t.Fatalf("archived HTTP write accepted: %d %s", w.Code, w.Body.String())

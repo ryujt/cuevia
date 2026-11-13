@@ -50,12 +50,12 @@ func TestSessionRunsBrowserFixture(t *testing.T) {
 	}
 	store.SetCaptureResolver(func(id string) (string, bool) { path, ok := paths[id]; return path, ok })
 	document := runTestDocument(t, false)
-	document["title"], document["elapsedMs"], document["duration"] = "실행 버전 검증 · 임시 세션", 1400, 1.4
+	document["title"], document["elapsedMs"], document["duration"] = "Run version check · temporary session", 1400, 1.4
 	document["scenes"] = []any{
-		map[string]any{"id": "scene-real", "captureId": strings.Repeat("a", 32), "imageUrl": "/api/session/session-real/original/" + strings.Repeat("a", 32), "width": 640, "height": 400, "title": "검증 화면 1", "app": "임시 프로그램", "capturedAt": 0, "note": ""},
-		map[string]any{"id": "scene-second", "captureId": strings.Repeat("b", 32), "imageUrl": "/api/session/session-real/original/" + strings.Repeat("b", 32), "width": 640, "height": 400, "title": "검증 화면 2", "app": "임시 프로그램", "capturedAt": .5, "note": ""},
+		map[string]any{"id": "scene-real", "captureId": strings.Repeat("a", 32), "imageUrl": "/api/session/session-real/original/" + strings.Repeat("a", 32), "width": 640, "height": 400, "title": "Test screen 1", "app": "Temporary app", "capturedAt": 0, "note": ""},
+		map[string]any{"id": "scene-second", "captureId": strings.Repeat("b", 32), "imageUrl": "/api/session/session-real/original/" + strings.Repeat("b", 32), "width": 640, "height": 400, "title": "Test screen 2", "app": "Temporary app", "capturedAt": .5, "note": ""},
 	}
-	document["transcript"] = []any{map[string]any{"id": "note-before-run", "kind": "note", "sceneId": "scene-real", "text": "이전 실행에서 보존할 텍스트입니다.", "t": .4, "startMs": 400, "endMs": 400}}
+	document["transcript"] = []any{map[string]any{"id": "note-before-run", "kind": "note", "sceneId": "scene-real", "text": "Text to keep from the previous run.", "t": .4, "startMs": 400, "endMs": 400}}
 	if _, err := store.Save("session-real", 0, sessionTestMarshal(t, document), json.RawMessage(`{}`)); err != nil {
 		t.Fatal(err)
 	}
@@ -63,7 +63,7 @@ func TestSessionRunsBrowserFixture(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := store.SetAudioTranscription("session-real", audio.ID, json.RawMessage(`[{"startMs":0,"endMs":200,"text":"이전 실행의 음성을 보존합니다."}]`), "complete"); err != nil {
+	if _, err := store.SetAudioTranscription("session-real", audio.ID, json.RawMessage(`[{"startMs":0,"endMs":200,"text":"Keeps speech from the previous run."}]`), "complete"); err != nil {
 		t.Fatal(err)
 	}
 	mux := http.NewServeMux()

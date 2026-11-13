@@ -142,10 +142,10 @@ test('production app renders and completes bootstrap when localStorage access is
     const app = boot({storageMode});
     assert.match(app.nodes.get('#app').innerHTML, /standby-screen/);
     assert.match(captureButton(app.nodes.get('#app').innerHTML), /disabled/);
-    assert.match(app.nodes.get('#app').innerHTML, /기록을 불러오는 중/);
+    assert.match(app.nodes.get('#app').innerHTML, /Loading your record/);
     await app.finishBootstrap();
     assert.doesNotMatch(captureButton(app.nodes.get('#app').innerHTML), /disabled/);
-    assert.doesNotMatch(app.nodes.get('#app').innerHTML, /기록을 불러오는 중/);
+    assert.doesNotMatch(app.nodes.get('#app').innerHTML, /Loading your record/);
     assert.deepEqual(app.calls, ['/api/session/current', '/api/capture/activity?since=0', '/api/transcription/status']);
     assert.deepEqual(app.errors, []);
     assert.doesNotThrow(app.beforeUnload, 'backup failure must not crash beforeunload');
@@ -177,9 +177,9 @@ test('recent server records survive unavailable or corrupt local cache and remai
     const snapshot = {
       revision: 4, updatedAt: new Date().toISOString(), audio: [],
       session: {
-        id: 'session-real-recent', title: '서버에 저장된 실제 기록', status: 'review', mode: 'mixed', elapsedMs: 17000, duration: 17,
-        scenes: [{id: 'scene-real-recent', title: '실제 화면', captureId: 'a'.repeat(32), imageUrl: '/captures/' + 'a'.repeat(32) + '.png', width: 1200, height: 800, annotations: [], capturedAt: 0}],
-        transcript: [{id: 'text-recent', kind: 'note', text: '저장 버튼의 위치를 오른쪽으로 옮겨주세요.', t: 12, sceneId: 'scene-real-recent', target: null}], notes: '', prompt: ''
+        id: 'session-real-recent', title: 'Actual record saved on the server', status: 'review', mode: 'mixed', elapsedMs: 17000, duration: 17,
+        scenes: [{id: 'scene-real-recent', title: 'Actual screen', captureId: 'a'.repeat(32), imageUrl: '/captures/' + 'a'.repeat(32) + '.png', width: 1200, height: 800, annotations: [], capturedAt: 0}],
+        transcript: [{id: 'text-recent', kind: 'note', text: 'Move the save button to the right.', t: 12, sceneId: 'scene-real-recent', target: null}], notes: '', prompt: ''
       },
       draft: {sceneId: 'scene-real-recent', noteDraft: '', draftContext: null, editingId: null}
     };
@@ -188,11 +188,11 @@ test('recent server records survive unavailable or corrupt local cache and remai
     assert.match(app.nodes.get('#app').innerHTML, /data-action="resume-session"/);
     app.click('resume-session');
     await turn();
-    assert.match(app.nodes.get('#app').innerHTML, /서버에 저장된 실제 기록/);
-    assert.match(app.nodes.get('#app').innerHTML, /실제 화면/);
+    assert.match(app.nodes.get('#app').innerHTML, /Actual record saved on the server/);
+    assert.match(app.nodes.get('#app').innerHTML, /Actual screen/);
     assert.match(app.nodes.get('#descriptions').innerHTML, /text-recent/);
-    assert.match(app.nodes.get('#descriptions').innerHTML, /저장 버튼의 위치를 오른쪽으로 옮겨주세요/);
-    assert.equal(app.nodes.get('.context-count').textContent, '1개 기록');
+    assert.match(app.nodes.get('#descriptions').innerHTML, /Move the save button to the right/);
+    assert.equal(app.nodes.get('.context-count').textContent, '1 entry');
     assert.deepEqual(app.errors, []);
     assert.doesNotThrow(app.beforeUnload);
     if (storageMode === 'malformed') {
@@ -208,19 +208,19 @@ function savedSnapshot() {
   return {
     revision: 8, updatedAt: new Date().toISOString(), audio: [],
     session: {
-      id: 'session-annotations', title: '캡처와 설명', status: 'review', mode: 'mixed', elapsedMs: 17000, duration: 17,
+      id: 'session-annotations', title: 'Captures and descriptions', status: 'review', mode: 'mixed', elapsedMs: 17000, duration: 17,
       scenes: [
-        {id: 'scene-one', title: '첫 화면', captureId: 'a'.repeat(32), imageUrl: '/captures/' + 'a'.repeat(32) + '.png', width: 1200, height: 800, capturedAt: 0, note: '첫 화면 메모', annotations: [
-          {id: 'saved-pen', type: 'pen', points: [{x: .1, y: .2}, {x: .4, y: .5}], label: '첫 판서'},
-          {id: 'saved-arrow', type: 'arrow', x: .2, y: .3, x2: .6, y2: .7, label: '버튼 위치'},
-          {id: 'previous-hidden', type: 'point', x: .8, y: .8, label: '과거에 취소한 표시', hidden: true, deletedAtMs: 800}
+        {id: 'scene-one', title: 'First screen', captureId: 'a'.repeat(32), imageUrl: '/captures/' + 'a'.repeat(32) + '.png', width: 1200, height: 800, capturedAt: 0, note: 'First screen note', annotations: [
+          {id: 'saved-pen', type: 'pen', points: [{x: .1, y: .2}, {x: .4, y: .5}], label: 'First drawing'},
+          {id: 'saved-arrow', type: 'arrow', x: .2, y: .3, x2: .6, y2: .7, label: 'Button position'},
+          {id: 'previous-hidden', type: 'point', x: .8, y: .8, label: 'Previously removed mark', hidden: true, deletedAtMs: 800}
         ]},
-        {id: 'scene-two', title: '둘째 화면', captureId: 'b'.repeat(32), imageUrl: '/captures/' + 'b'.repeat(32) + '.png', width: 1200, height: 800, capturedAt: 10, note: '다른 화면 메모', annotations: [
-          {id: 'other-scene', type: 'rect', x: .3, y: .3, w: .2, h: .2, label: '다른 화면 표시'}
+        {id: 'scene-two', title: 'Second screen', captureId: 'b'.repeat(32), imageUrl: '/captures/' + 'b'.repeat(32) + '.png', width: 1200, height: 800, capturedAt: 10, note: 'Other screen note', annotations: [
+          {id: 'other-scene', type: 'rect', x: .3, y: .3, w: .2, h: .2, label: 'Other screen mark'}
         ]}
       ],
-      transcript: [{id: 'speech-original', kind: 'speech', text: '이 버튼을 오른쪽으로 옮겨주세요.', t: 12, sceneId: 'scene-one', target: 'saved-arrow'}],
-      notes: '기존 설명과 메모는 보존해주세요.', prompt: '# 이전 프롬프트'
+      transcript: [{id: 'speech-original', kind: 'speech', text: 'Move this button to the right.', t: 12, sceneId: 'scene-one', target: 'saved-arrow'}],
+      notes: 'Keep the existing descriptions and notes.', prompt: '# Previous prompt'
     },
     draft: {sceneId: 'scene-one', targetId: 'saved-arrow', noteDraft: '', draftContext: null, editingId: null}
   };
@@ -237,16 +237,16 @@ test('legacy pen data stays opaque while structured tools and screen anchors rem
   snapshot.session.annotationEvents = [{id: 'legacy-event', type: 'create'}];
   const app = boot({snapshot});
   await app.finishBootstrap(); app.click('resume-session'); await turn();
-  assert.doesNotMatch(app.nodes.get('#app').innerHTML, /data-tool="pen"|자유롭게 그리기|판서 기록/);
-  assert.doesNotMatch(app.nodes.get('#descriptions').innerHTML, /annotation-history|표시한 위치|legacy-event/);
-  app.input('오른쪽 패널의 간격을 줄여주세요.');
+  assert.doesNotMatch(app.nodes.get('#app').innerHTML, /data-tool="pen"|Freehand drawing|Drawing log/);
+  assert.doesNotMatch(app.nodes.get('#descriptions').innerHTML, /annotation-history|Marked location|legacy-event/);
+  app.input('Reduce the spacing in the right panel.');
   const saved = await app.flushSave();
   assert.deepEqual(saved.session.scenes[0].annotations, snapshot.session.scenes[0].annotations);
   assert.deepEqual(saved.session.annotationEvents, snapshot.session.annotationEvents);
   assert.equal(saved.draft.draftContext.sceneId, 'scene-one');
   assert.equal(saved.draft.draftContext.targetId, 'saved-arrow');
   assert.equal(saved.draft.targetId, 'saved-arrow');
-  assert.doesNotMatch(app.prompt(saved.session), /saved-pen|saved-arrow|previous-hidden|annotation-events|펜 영역|판서/);
+  assert.doesNotMatch(app.prompt(saved.session), /saved-pen|saved-arrow|previous-hidden|annotation-events|Pen area|Drawing/);
   assert.deepEqual(app.errors, []);
 });
 
@@ -274,7 +274,7 @@ test('capture delete persists a reversible exclusion, moves selection, and prese
   assert.equal(saved.draft.sceneId, 'scene-two');
   assert.doesNotMatch(app.nodes.get('#app').innerHTML, /data-action="scene" data-id="scene-one"/);
   assert.doesNotMatch(app.nodes.get('#descriptions').innerHTML, /speech-original/);
-  assert.doesNotMatch(app.prompt(saved.session), /이 버튼을 오른쪽으로 옮겨주세요/);
+  assert.doesNotMatch(app.prompt(saved.session), /Move this button to the right/);
   const reopened = boot({snapshot: {...saved, revision: 9}});
   await reopened.finishBootstrap();reopened.click('resume-session');await turn();
   assert.doesNotMatch(reopened.nodes.get('#app').innerHTML, /data-action="scene" data-id="scene-one"/);
@@ -283,20 +283,20 @@ test('capture delete persists a reversible exclusion, moves selection, and prese
   assert.equal(restored.session.scenes[0].deletedAt, undefined);
   assert.match(reopened.nodes.get('#descriptions').innerHTML, /speech-original/);
   assert.deepEqual(restored.session.annotationEvents, before);
-  assert.match(reopened.prompt(restored.session), /이 버튼을/);
+  assert.match(reopened.prompt(restored.session), /Move this button/);
 });
 
 test('capture deletion protects unsaved text and permits restoring after all captures were deleted', async () => {
   const app = boot({snapshot: savedSnapshot()});
   await app.finishBootstrap();app.click('resume-session');await turn();
-  app.input('아직 저장하지 않은 설명');
+  app.input('Description not saved yet');
   app.click('delete-scene', {id: 'scene-one'});await turn();
   assert.equal(app.backup().session.scenes[0].deletedAt, undefined);
   app.input('');
   app.click('delete-scene', {id: 'scene-one'});await turn();
   app.advanceTime(1);
   app.click('delete-scene', {id: 'scene-two'});await turn();
-  assert.match(app.nodes.get('#app').innerHTML, /설명할 화면을 골라주세요/);
+  assert.match(app.nodes.get('#app').innerHTML, /Choose a screen to describe/);
   assert.match(app.nodes.get('#app').innerHTML, /data-action="restore-scene"/);
   app.click('restore-scene');await turn();
   app.beforeUnload();
@@ -308,7 +308,7 @@ test('generate saves screen selection and materializes original captures without
   const snapshot = savedSnapshot();
   snapshot.session.scenes[1].note = '';snapshot.session.scenes[1].annotations=[];snapshot.session.scenes[0].annotations=[];
   const unrelated = structuredClone(snapshot.session.scenes[1]);
-  unrelated.id = 'scene-unused'; unrelated.title = '무관한 화면'; unrelated.captureId = 'c'.repeat(32); unrelated.note = '';
+  unrelated.id = 'scene-unused'; unrelated.title = 'Unrelated screen'; unrelated.captureId = 'c'.repeat(32); unrelated.note = '';
   unrelated.annotations = [{id: 'unused-mark', type: 'pen', points: [{x: .5, y: .5}]}];
   snapshot.session.scenes.push(unrelated);
   const app = boot({snapshot});
@@ -319,8 +319,8 @@ test('generate saves screen selection and materializes original captures without
   assert.deepEqual(app.saves.at(-1).session.promptSceneIds, ['scene-one']);
   assert.match(app.materialRequests[0].path, /materials\?revision=9$/);
   assert.ok(app.calls.every(path => !path.includes('/frame/')));
-  assert.match(app.nodes.get('#modal-root').innerHTML, /에이전트에게 전달할 프롬프트/);
-  assert.doesNotMatch(app.saves.at(-1).session.prompt, /unused-mark|saved-arrow|무관한 화면|펜 영역|annotation-events/);
+  assert.match(app.nodes.get('#modal-root').innerHTML, /Prompt for your agent/);
+  assert.doesNotMatch(app.saves.at(-1).session.prompt, /unused-mark|saved-arrow|Unrelated screen|Pen area|annotation-events/);
   assert.deepEqual(app.errors, []);
 });
 
@@ -333,8 +333,8 @@ test('legacy audio target changes resolve one screen while actual screen switche
     {tMs: 1000, sceneId: 'scene-one', targetId: 'old-arrow'},
     {tMs: 3000, sceneId: 'scene-two', targetId: null}
   ], transcription: [
-    {startMs: 0, endMs: 2000, text: '같은 화면의 설명입니다.'},
-    {startMs: 2000, endMs: 5000, text: '화면을 전환하며 설명합니다.'}
+    {startMs: 0, endMs: 2000, text: 'This describes the same screen.'},
+    {startMs: 2000, endMs: 5000, text: 'This describes it while switching screens.'}
   ]}];
   const app = boot({snapshot});
   await app.finishBootstrap(); app.click('resume-session'); await turn(); app.click('generate');
@@ -357,7 +357,7 @@ test('text toggle starts an independent version without microphone and timestamp
   app.click('toggle-text');await settle();
   assert.equal(app.starts.length,1);assert.equal(app.microphoneStarts(),0);
   assert.match(app.nodes.get('#voice-control').innerHTML,/data-action="toggle-text" aria-pressed="true"/);
-  app.advanceTime(5000);app.input('새 버전의 텍스트 설명');app.submit();await turn();
+  app.advanceTime(5000);app.input('Text description for the new version');app.submit();await turn();
   let saved=await app.flushSave();
   assert.equal(saved.session.runMode,'text');assert.equal(saved.session.transcript.length,1);assert.equal(saved.session.transcript[0].t,5);
   assert.deepEqual(saved.session.recordings,[]);assert.equal(app.archives.size,1);
@@ -366,25 +366,25 @@ test('text toggle starts an independent version without microphone and timestamp
   assert.equal(app.backup().session.runState,'stopped');const elapsed=app.backup().session.elapsedMs;
   app.advanceTime(20000);app.beforeUnload();assert.equal(app.backup().session.elapsedMs,elapsed);
   assert.deepEqual([...app.archives.values()][0],old);
-  assert.match(app.materialRequests.at(-1).session.prompt,/기록 시작 기준/);
-  assert.doesNotMatch(app.materialRequests.at(-1).session.prompt,/이 버튼을 오른쪽/);
+  assert.match(app.materialRequests.at(-1).session.prompt,/relative to text start/);
+  assert.doesNotMatch(app.materialRequests.at(-1).session.prompt,/Move this button to the right/);
 });
 
 test('switching toggles commits draft to old version, resets time and audio, and keeps history read-only', async () => {
   const app=boot({snapshot:savedSnapshot()});await app.finishBootstrap();app.click('toggle-text');await settle();
-  app.advanceTime(2000);app.input('종료 직전에 입력한 설명');
+  app.advanceTime(2000);app.input('Description typed right before stopping');
   app.click('toggle-audio');await settle();
   assert.equal(app.starts.length,2);assert.equal(app.microphoneStarts(),1);
-  assert.equal(app.archives.get('run-1').session.transcript[0].text,'종료 직전에 입력한 설명');
+  assert.equal(app.archives.get('run-1').session.transcript[0].text,'Description typed right before stopping');
   assert.equal(app.archives.get('run-1').session.transcript[0].t,2);
   app.beforeUnload();assert.equal(app.backup().session.transcript.length,0);assert.equal(app.backup().session.elapsedMs,0);
   assert.match(app.nodes.get('#voice-control').innerHTML,/data-action="toggle-audio" aria-pressed="true"/);
   assert.match(app.nodes.get('#voice-control').innerHTML,/data-action="toggle-text" aria-pressed="false"/);
   const activeID=app.backup().session.id;app.click('history');await settle();
-  assert.match(app.nodes.get('#modal-root').innerHTML,/아카이브/);
+  assert.match(app.nodes.get('#modal-root').innerHTML,/Archive/);
   app.click('view-archive',{id:'run-1'});await settle();app.beforeUnload();
-  assert.match(app.nodes.get('#modal-root').innerHTML,/읽기 전용/);
-  assert.match(app.nodes.get('#modal-root').innerHTML,/종료 직전에 입력한 설명/);
+  assert.match(app.nodes.get('#modal-root').innerHTML,/read-only/);
+  assert.match(app.nodes.get('#modal-root').innerHTML,/Description typed right before stopping/);
   assert.equal(app.backup().session.id,activeID);
 });
 
@@ -392,7 +392,7 @@ test('microphone denial leaves a zero-time ready run and text mode never request
   const app=boot({snapshot:savedSnapshot(),microphoneDenied:true});await app.finishBootstrap();app.click('toggle-audio');await settle();
   app.advanceTime(10000);app.beforeUnload();
   assert.equal(app.backup().session.runState,'ready');assert.equal(app.backup().session.elapsedMs,0);
-  assert.match(app.nodes.get('#voice-control').innerHTML,/마이크 사용이 허용되지/);
+  assert.match(app.nodes.get('#voice-control').innerHTML,/Mic access wasn/);
   app.click('toggle-text');await settle();
   assert.equal(app.microphoneStarts(),1);assert.equal(app.backup().session.runMode,'text');
 });
@@ -431,7 +431,7 @@ test('save failure after acquiring microphone preserves the real active state an
   const app=boot({snapshot:savedSnapshot(),saveFailure:saved=>{if(!failed&&saved.session.runMode==='audio'&&saved.session.runState==='recording'){failed=true;return true;}return false;}});
   await app.finishBootstrap();app.click('toggle-audio');await settle();app.beforeUnload();
   assert.equal(failed,true);assert.equal(app.backup().session.runState,'recording');
-  assert.match(app.nodes.get('#voice-control').innerHTML,/마이크 녹음 중 · 저장에 실패/);
+  assert.match(app.nodes.get('#voice-control').innerHTML,/Recording from mic · Save failed/);
   app.advanceTime(2000);app.click('toggle-audio');await settle();app.beforeUnload();assert.equal(app.backup().session.runState,'stopped');
 });
 
@@ -440,7 +440,7 @@ test('a second tab cannot archive a version with a live editor lease', async () 
   app.stored.set('cuevia.editor.lease.v1',JSON.stringify({id:'other-live-editor',sessionId:'session-annotations',at:Date.now()}));
   app.click('toggle-text');await settle();
   assert.equal(app.starts.length,0);assert.equal(app.saves.length,0);
-  assert.match(app.nodes.get('#toast').innerHTML,/다른 창에서 이 버전을 기록/);
+  assert.match(app.nodes.get('#toast').innerHTML,/Another window is recording this version/);
 });
 
 
@@ -465,13 +465,13 @@ test('numbered point, arrow and rectangle restore undo and clear-all without fre
   assert.match(app.nodes.get('#app').innerHTML,/data-action="undo-mark"/);
   assert.match(app.nodes.get('#app').innerHTML,/data-action="clear-marks"/);
   assert.doesNotMatch(app.nodes.get('#app').innerHTML,/data-tool="pen"/);
-  app.input('네모로 표시한 영역을 설명합니다.');
+  app.input('This describes the area marked with a box.');
   app.click('clear-marks');await turn();
   scene=app.backup().session.scenes[0];assert.ok(scene.annotations.every(mark=>mark.hidden));
   assert.equal(app.backup().draft.draftContext.targetId,'rect-3');
   app.click('undo-mark');await turn();
   scene=app.backup().session.scenes[0];assert.ok(scene.annotations.every(mark=>!mark.hidden));
-  assert.match(app.nodes.get('#app').innerHTML,/화면 01 · #3/);
+  assert.match(app.nodes.get('#app').innerHTML,/Screen 01 · #3/);
   app.click('undo-mark');await turn();
   scene=app.backup().session.scenes[0];assert.equal(scene.annotations[2].hidden,true);assert.equal(scene.annotations[1].hidden,false);
   app.input('');app.click('generate');await settle();
@@ -486,11 +486,11 @@ test('numbered point, arrow and rectangle restore undo and clear-all without fre
 test('text notes keep numbered target anchors while screen-only legacy ambiguity remains cleared', async () => {
   const app=boot({snapshot:savedSnapshot(),withMarks:true});await app.finishBootstrap();app.click('toggle-text');await settle();
   app.annotationMounts.at(-1).onCommit({id:'point-current',type:'point',x:.2,y:.3});
-  app.advanceTime(2000);app.input('이 위치를 바꿔주세요.');app.submit();await turn();
+  app.advanceTime(2000);app.input('Please change this position.');app.submit();await turn();
   const saved=await app.flushSave();assert.equal(saved.session.transcript[0].target,'point-current');
   assert.equal(saved.session.transcript[0].t,2);assert.match(app.prompt(saved.session),/S01#1/);
   app.click('clear-marks');await turn();
-  const cleared=await app.flushSave();assert.equal(cleared.session.transcript[0].text,'이 위치를 바꿔주세요.');
+  const cleared=await app.flushSave();assert.equal(cleared.session.transcript[0].text,'Please change this position.');
   assert.doesNotMatch(app.prompt(cleared.session),/S01#1 point/);
 });
 
@@ -511,14 +511,14 @@ test('menu settings tab preserves the active editor lease and never restores a r
   assert.equal(app.stored.get('cuevia.editor.v1'),'active-recording-editor');
   assert.equal(app.stored.get('cuevia.editor.lease.v1'),lease);
   assert.match(app.nodes.get('#modal-root').innerHTML,/type="password"/);
-  assert.match(app.nodes.get('#modal-root').innerHTML,/whisper-1 · 기본 · 구간 시각 지원/);
-  assert.match(app.nodes.get('#modal-root').innerHTML,/gpt-4o-mini-transcribe · 구간 시각 없음/);
-  assert.match(app.nodes.get('#modal-root').innerHTML,/비워 두면 기존 키를 유지/);
+  assert.match(app.nodes.get('#modal-root').innerHTML,/whisper-1 · default · segment times/);
+  assert.match(app.nodes.get('#modal-root').innerHTML,/gpt-4o-mini-transcribe · no segment times/);
+  assert.match(app.nodes.get('#modal-root').innerHTML,/Leave blank to keep it/);
   field.value='fake-new-settings-key';select.value='gpt-4o-transcribe';app.submit('settings-form');
   assert.equal(field.value,'','the key must be removed from the DOM immediately on submission');
   await turn();await turn();
   assert.deepEqual(app.settingsSaves,[{apiKey:'fake-new-settings-key',model:'gpt-4o-transcribe'}]);
-  assert.equal(field.value,'');assert.match(message.textContent,/저장했어요/);
+  assert.equal(field.value,'');assert.match(message.textContent,/Saved\./);
   assert.doesNotMatch(app.nodes.get('#modal-root').innerHTML,/fake-new-settings-key/);
   assert.equal(app.stored.get('cuevia.editor.v1'),'active-recording-editor');
   assert.equal(app.stored.get('cuevia.editor.lease.v1'),lease);
@@ -532,7 +532,7 @@ test('settings error responses never echo a provider or key value into the UI', 
   const field={value:'fake-secret-do-not-render'},message={textContent:''};
   app.nodes.set('#openai-key',field);app.nodes.set('#transcription-model',{value:'whisper-1',addEventListener(){}});app.nodes.set('#settings-save',{disabled:false});app.nodes.set('#settings-message',message);
   await turn();await turn();app.submit('settings-form');await turn();await turn();
-  assert.equal(field.value,'');assert.match(message.textContent,/설정을 저장하지 못했어요/);assert.doesNotMatch(message.textContent,/fake-secret/);
+  assert.equal(field.value,'');assert.match(message.textContent,/Couldn't save settings/);assert.doesNotMatch(message.textContent,/fake-secret/);
   assert.equal(app.writes.length,0);
 });
 
@@ -542,20 +542,20 @@ test('GPT recording-wide transcripts keep every screen as a candidate without as
   snapshot.audio=[{id:'audio-gpt',url:'/audio.wav',startMs:2000,endMs:12000,transcriptionStatus:'complete',contexts:[
     {tMs:2000,sceneId:'scene-one',targetId:'saved-arrow'},
     {tMs:6000,sceneId:'scene-two',targetId:null}
-  ],transcription:[{startMs:0,endMs:10000,text:'전체 녹음의 문장들을 그대로 보존합니다.',timingEstimated:true}]}];
+  ],transcription:[{startMs:0,endMs:10000,text:'Keeps every sentence of the full recording as is.',timingEstimated:true}]}];
   const app=boot({snapshot});await app.finishBootstrap();app.click('resume-session');await turn();app.click('generate');await settle();
   const item=app.saves.at(-1).session.transcript[0],prompt=app.saves.at(-1).session.prompt;
   assert.equal(item.sceneId,null);assert.equal(item.target,null);assert.equal(item.unresolved,true);assert.equal(item.timingUncertain,true);assert.equal(item.timingEstimated,true);
   assert.deepEqual(item.candidates.map(value=>value.sceneId),['scene-one','scene-two']);
-  assert.match(app.nodes.get('#descriptions').innerHTML,/문장별 시각 없음 · 녹음 전체 구간/);
-  assert.match(app.nodes.get('#descriptions').innerHTML,/녹음 00:02–00:12/);
-  assert.match(prompt,/문장별 시각 없음 · 녹음 전체 구간/);assert.match(prompt,/연결\?/);assert.match(prompt,/후보 S01/);assert.match(prompt,/S02/);
+  assert.match(app.nodes.get('#descriptions').innerHTML,/no per-sentence times · whole recording span/i);
+  assert.match(app.nodes.get('#descriptions').innerHTML,/Recording 00:02–00:12/);
+  assert.match(prompt,/no per-sentence times · whole recording span/i);assert.match(prompt,/link\?/);assert.match(prompt,/candidates S01/);assert.match(prompt,/S02/);
 });
 
 test('a GPT recording with one screen still requires confirmation and does not infer a target', async () => {
   const snapshot=savedSnapshot();snapshot.session.transcript=[];
-  snapshot.audio=[{id:'audio-gpt-single',url:'/audio.wav',startMs:0,endMs:5000,transcriptionStatus:'complete',contexts:[{tMs:0,sceneId:'scene-one',targetId:'saved-arrow'}],transcription:[{startMs:0,endMs:5000,text:'단일 화면도 직접 연결을 확인합니다.',timingEstimated:true}]}];
+  snapshot.audio=[{id:'audio-gpt-single',url:'/audio.wav',startMs:0,endMs:5000,transcriptionStatus:'complete',contexts:[{tMs:0,sceneId:'scene-one',targetId:'saved-arrow'}],transcription:[{startMs:0,endMs:5000,text:'Even a single screen needs its link confirmed.',timingEstimated:true}]}];
   const app=boot({snapshot});await app.finishBootstrap();app.click('resume-session');await turn();app.click('generate');await settle();
   const item=app.saves.at(-1).session.transcript[0];assert.equal(item.sceneId,null);assert.equal(item.target,null);assert.equal(item.unresolved,true);assert.equal(item.candidates.length,1);
-  assert.match(app.saves.at(-1).session.prompt,/문장별 시각 없음 · 녹음 전체 구간/);
+  assert.match(app.saves.at(-1).session.prompt,/no per-sentence times · whole recording span/i);
 });

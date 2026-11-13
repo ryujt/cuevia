@@ -133,7 +133,7 @@ namespace CueviaWindows {
                     try {
                         using (var graphics = Graphics.FromImage(image)) graphics.CopyFromScreen(bounds.Location, Point.Empty, bounds.Size);
                     } catch (Win32Exception error) {
-                        throw new InvalidOperationException("Windows 화면 잠금을 해제하고 원격 데스크톱에 다시 연결한 뒤 캡처를 시도하세요.", error);
+                        throw new InvalidOperationException("Unlock the Windows screen and reconnect to Remote Desktop, then try capturing again.", error);
                     }
                     using (var overlay = new CaptureOverlay(image, bounds)) {
                         if (overlay.ShowDialog() != DialogResult.OK) return null;

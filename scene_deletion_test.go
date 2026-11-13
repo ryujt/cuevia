@@ -16,7 +16,7 @@ import (
 func TestDeletedCapturePersistsAndIsExcludedFromNewMaterials(t *testing.T) {
 	store, _, _ := sessionTestStore(t)
 	var document map[string]any
-	if err := json.Unmarshal(sessionTestJSON("캡처 삭제"), &document); err != nil {
+	if err := json.Unmarshal(sessionTestJSON("Delete capture"), &document); err != nil {
 		t.Fatal(err)
 	}
 	first := document["scenes"].([]any)[0].(map[string]any)
@@ -92,10 +92,10 @@ func TestSceneListBrowserFixture(t *testing.T) {
 		t.Skip("opt-in manual scene-list browser fixture")
 	}
 	store, _, _ := sessionTestStore(t)
-	document := map[string]any{"id": "session-real", "title": "캡처 목록 검증 · 임시 세션", "duration": 10, "elapsedMs": 10000, "scenes": []any{}, "transcript": []any{}, "notes": "", "prompt": ""}
+	document := map[string]any{"id": "session-real", "title": "Capture list check · temporary session", "duration": 10, "elapsedMs": 10000, "scenes": []any{}, "transcript": []any{}, "notes": "", "prompt": ""}
 	scenes := []any{}
 	for i := 1; i <= 12; i++ {
-		scenes = append(scenes, map[string]any{"id": fmt.Sprintf("scene-%02d", i), "title": fmt.Sprintf("검증 캡처 %02d", i), "captureId": strings.Repeat("a", 32), "width": 640, "height": 400, "capturedAt": i})
+		scenes = append(scenes, map[string]any{"id": fmt.Sprintf("scene-%02d", i), "title": fmt.Sprintf("Test capture %02d", i), "captureId": strings.Repeat("a", 32), "width": 640, "height": 400, "capturedAt": i})
 	}
 	document["scenes"] = scenes
 	if _, err := store.Save("session-real", 0, sessionTestMarshal(t, document), nil); err != nil {

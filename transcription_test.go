@@ -71,12 +71,12 @@ func TestTranscriptionWAVValidation(t *testing.T) {
 }
 
 func TestParseWhisperJSONPreservesActualOffsets(t *testing.T) {
-	const input = `{"transcription":[{"offsets":{"from":20,"to":750},"text":" 첫 번째 문장 "},{"timestamps":{"from":"00:00:00,750","to":"00:00:01,250"},"text":"두 번째 문장"}]}`
+	const input = `{"transcription":[{"offsets":{"from":20,"to":750},"text":" First sentence "},{"timestamps":{"from":"00:00:00,750","to":"00:00:01,250"},"text":"Second sentence"}]}`
 	segments, err := parseWhisperJSON(strings.NewReader(input), 1100)
 	if err != nil || len(segments) != 2 {
 		t.Fatalf("segments=%+v err=%v", segments, err)
 	}
-	if segments[0].StartMs != 20 || segments[0].EndMs != 750 || segments[0].Text != "첫 번째 문장" || segments[1].StartMs != 750 || segments[1].EndMs != 1100 {
+	if segments[0].StartMs != 20 || segments[0].EndMs != 750 || segments[0].Text != "First sentence" || segments[1].StartMs != 750 || segments[1].EndMs != 1100 {
 		t.Fatalf("timestamps/text changed: %+v", segments)
 	}
 	for _, invalid := range []string{
@@ -120,13 +120,13 @@ func TestTranscriberProcessBoundary(t *testing.T) {
 		t.Fatal(err)
 	}
 	engine := filepath.Join(dir, "whisper-test")
-	script := "#!/bin/sh\nwhile [ \"$#\" -gt 0 ]; do\nif [ \"$1\" = '--output-file' ]; then shift; output=$1; fi\nshift\ndone\nprintf '%s' '{\"transcription\":[{\"offsets\":{\"from\":0,\"to\":700},\"text\":\"테스트\"}]}' > \"$output.json\"\n"
+	script := "#!/bin/sh\nwhile [ \"$#\" -gt 0 ]; do\nif [ \"$1\" = '--output-file' ]; then shift; output=$1; fi\nshift\ndone\nprintf '%s' '{\"transcription\":[{\"offsets\":{\"from\":0,\"to\":700},\"text\":\"Test\"}]}' > \"$output.json\"\n"
 	if err := os.WriteFile(engine, []byte(script), 0700); err != nil {
 		t.Fatal(err)
 	}
 	s := NewTranscriber(TranscriberConfig{BinaryPath: engine, ModelPath: model, JobsDir: filepath.Join(dir, "jobs")})
 	segments, err := s.Transcribe(context.Background(), testTranscriptionWAV(t, true))
-	if err != nil || len(segments) != 1 || segments[0].Text != "테스트" || segments[0].EndMs != 700 {
+	if err != nil || len(segments) != 1 || segments[0].Text != "Test" || segments[0].EndMs != 700 {
 		t.Fatalf("process result: %+v %v", segments, err)
 	}
 	if jobs, err := os.ReadDir(s.config.JobsDir); err != nil || len(jobs) != 0 {
@@ -162,7 +162,7 @@ func TestTranscriberProcessBoundary(t *testing.T) {
 	}
 }
 
-// Opt in with CUEVIA_TEST_REAL_WAV=/path/to/spoken-korean.wav. This uses the
+// Opt in with CUEVIA_TEST_REAL_WAV=/path/to/spoken-english.wav. This uses the
 // installed engine and model, and deliberately fails if they are unavailable.
 func TestRealTranscription(t *testing.T) {
 	path := os.Getenv("CUEVIA_TEST_REAL_WAV")

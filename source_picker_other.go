@@ -5,7 +5,7 @@ package main
 import "errors"
 
 func chooseCaptureSource() (CaptureSource, error) {
-	return CaptureSource{}, &CaptureError{Kind: CaptureUnavailable, Err: errors.New("화면 선택은 macOS에서 사용할 수 있어요")}
+	return CaptureSource{}, &CaptureError{Kind: CaptureUnavailable, Err: errors.New("Screen selection is only available on macOS")}
 }
 
 func platformRequestCapture() error {

@@ -16,7 +16,7 @@ import (
 func nativeCaptureSources() ([]byte, error) {
 	value := C.cuevia_copy_sources()
 	if value == nil {
-		return nil, errors.New("화면 목록을 읽지 못했어요")
+		return nil, errors.New("Couldn't read the list of screens")
 	}
 	defer C.free(unsafe.Pointer(value))
 	return []byte(C.GoString(value)), nil

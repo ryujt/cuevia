@@ -16,7 +16,7 @@ import (
 func frameTestDocument(t *testing.T, marks any) map[string]any {
 	t.Helper()
 	var document map[string]any
-	if err := json.Unmarshal(sessionTestJSON("구조화 표시"), &document); err != nil {
+	if err := json.Unmarshal(sessionTestJSON("Structured marks"), &document); err != nil {
 		t.Fatal(err)
 	}
 	document["scenes"].([]any)[0].(map[string]any)["annotations"] = marks

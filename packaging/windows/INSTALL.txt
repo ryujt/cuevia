@@ -32,7 +32,7 @@ seven-day retention policy applies while the app is running.
 No API keys, .env files, or user records are included in the installer.
 This installer is not code-signed.
 
-Windows 단축키: Ctrl+Alt+S. 트레이의 캡처 시작으로도 실행할 수 있습니다.
-마우스로 영역을 드래그하고 Esc로 취소합니다. 트레이의 프로그램 종료로
-앱과 서버를 종료하세요. 사용 중인 포트는 자동으로 피하며 재실행하면
-기존 인스턴스를 엽니다. 제거 시 사용자 자료는 보존됩니다.
+Quick reference: press Ctrl+Alt+S or choose Capture in the tray menu.
+Drag to select an area; press Esc to cancel. Choose Quit in the tray menu to
+stop the app and its server. Ports in use are skipped automatically, and
+starting Cuevia again reopens the running instance. Uninstalling keeps your data.

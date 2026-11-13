@@ -40,7 +40,7 @@ func runSelectedScreenCapture(ctx context.Context, source CaptureSource, path st
 		}
 	}
 	if kind == 0 {
-		return nil, &CaptureError{Kind: CaptureFailed, Err: errors.New("캡처할 화면 정보가 올바르지 않아요")}
+		return nil, &CaptureError{Kind: CaptureFailed, Err: errors.New("The screen to capture is invalid")}
 	}
 	wait := 30 * time.Second
 	if deadline, ok := ctx.Deadline(); ok {
@@ -69,14 +69,14 @@ func runSelectedScreenCapture(ctx context.Context, source CaptureSource, path st
 		} else if status == -3900 {
 			kind = CaptureUnavailable
 		}
-		details := "화면을 캡처하지 못했어요"
+		details := "Couldn't capture the screen"
 		if message != nil {
 			details = C.GoString(message)
 		}
 		return nil, &CaptureError{Kind: kind, Err: fmt.Errorf("ScreenCaptureKit (%d): %s", int(status), details)}
 	}
 	if png == nil || size == 0 || uint64(size) > 32<<20 {
-		return nil, &CaptureError{Kind: CaptureFailed, Err: errors.New("캡처한 PNG 데이터가 올바르지 않아요")}
+		return nil, &CaptureError{Kind: CaptureFailed, Err: errors.New("The captured PNG data is invalid")}
 	}
 	data := C.GoBytes(png, C.int(size))
 	if err := ctx.Err(); err != nil {

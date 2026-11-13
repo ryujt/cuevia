@@ -304,21 +304,21 @@ if [ "$release_mode" = distribution ]; then
 fi
 
 ln -s /Applications "$dmg_root/Applications"
-cp "$project_dir/scripts/installer-guide.txt" "$dmg_root/읽어주세요.txt"
+cp "$project_dir/scripts/installer-guide.txt" "$dmg_root/README.txt"
 cp "$project_dir/.env.example" "$dmg_root/Cuevia.env.example"
 if [ "$release_mode" = preview ]; then
   if [ "$actual_signing" = development ]; then
-    preview_description='Apple Development 서명 · Apple 공증을 받지 않은 프리뷰'
+    preview_description='Apple Development signed · preview not notarized by Apple'
   else
-    preview_description='Developer ID Application 서명 · Apple 공증을 받지 않은 프리뷰'
+    preview_description='Developer ID Application signed · preview not notarized by Apple'
   fi
-  printf '\n이 이미지의 배포 상태\n%s\n일반 배포용 공증 릴리스가 아닙니다. macOS가 실행을 차단하면 배포자에게 공증된 릴리스를 요청하세요.\n' "$preview_description" >> "$dmg_root/읽어주세요.txt"
+  printf '\nRelease status of this image\n%s\nThis is not a notarized release for general distribution. If macOS blocks the app, ask the distributor for a notarized release.\n' "$preview_description" >> "$dmg_root/README.txt"
   printf '%s\n' "$preview_description"
 else
-  printf '\n이 이미지의 배포 상태\nDeveloper ID Application 서명 · Apple 공증을 통과한 배포 릴리스\n' >> "$dmg_root/읽어주세요.txt"
+  printf '\nRelease status of this image\nDeveloper ID Application signed · release notarized by Apple\n' >> "$dmg_root/README.txt"
 fi
 chmod 755 "$dmg_root"
-chmod 644 "$dmg_root/읽어주세요.txt" "$dmg_root/Cuevia.env.example"
+chmod 644 "$dmg_root/README.txt" "$dmg_root/Cuevia.env.example"
 candidate_dmg="$staging_dir/$file_name"
 /usr/bin/hdiutil create -volname Cuevia -srcfolder "$dmg_root" -fs HFS+ -format UDZO "$candidate_dmg"
 if [ -n "$signing_identity" ]; then
@@ -364,8 +364,8 @@ with attached_plist.open("rb") as stream:
 mount_points = [entity.get("mount-point") for entity in attached.get("system-entities", [])]
 if str(mount) not in mount_points:
     sys.exit('hdiutil did not report the expected private mount point.')
-expected = {"Cuevia.app", "Applications", "읽어주세요.txt", "Cuevia.env.example"}
-# HFS+ stores Korean filenames in decomposed Unicode. Compare canonical names
+expected = {"Cuevia.app", "Applications", "README.txt", "Cuevia.env.example"}
+# HFS+ stores non-ASCII filenames in decomposed Unicode. Compare canonical names
 # without accepting any extra entries or canonically equivalent duplicates.
 entries = list(mount.iterdir())
 actual = {unicodedata.normalize("NFC", entry.name) for entry in entries}
@@ -375,11 +375,11 @@ if not (mount / "Applications").is_symlink() or (mount / "Applications").readlin
     sys.exit('The DMG Applications link is invalid.')
 if (mount / "Cuevia.app").is_symlink() or not (mount / "Cuevia.app").is_dir():
     sys.exit('The DMG app is not a regular app bundle.')
-for name in ("읽어주세요.txt", "Cuevia.env.example"):
+for name in ("README.txt", "Cuevia.env.example"):
     target = mount / name
     if target.is_symlink() or not target.is_file() or target.read_bytes() != (source / name).read_bytes():
         sys.exit('A public DMG document does not match its validated source.')
-print('Verified DMG root: Applications -> /Applications, Cuevia.app, Cuevia.env.example, 읽어주세요.txt')
+print('Verified DMG root: Applications -> /Applications, Cuevia.app, Cuevia.env.example, README.txt')
 PY
 verify_signature "$mount_dir/Cuevia.app" mounted-app app "$actual_app_identity"
 [ "$verified_signing" = "$actual_signing" ] || die 'The app in the DMG has a different signing certificate type.'

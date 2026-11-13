@@ -11,8 +11,8 @@ import (
 
 func TestCaptureSourceMetadataSurvivesServiceRestart(t *testing.T) {
 	for _, source := range []CaptureSource{
-		{ID: "program-12", Kind: "program", Name: "Google Chrome", PID: 4321, WindowID: 12, Title: "제품 미리보기", Width: 1200, Height: 800, X: 120, Y: 40},
-		{ID: "monitor-22", Kind: "monitor", Name: "외장 모니터 1", DisplayID: 22, DisplayIndex: 1, Width: 3840, Height: 2160, Scale: 2, Main: true, X: -1920},
+		{ID: "program-12", Kind: "program", Name: "Google Chrome", PID: 4321, WindowID: 12, Title: "Product preview", Width: 1200, Height: 800, X: 120, Y: 40},
+		{ID: "monitor-22", Kind: "monitor", Name: "External monitor 1", DisplayID: 22, DisplayIndex: 1, Width: 3840, Height: 2160, Scale: 2, Main: true, X: -1920},
 	} {
 		t.Run(source.Kind, func(t *testing.T) {
 			service := testCaptureService(t)

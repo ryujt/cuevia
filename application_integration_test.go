@@ -79,7 +79,7 @@ func TestApplicationRealTranscriptionRecovery(t *testing.T) {
 
 	body, _ := request(http.MethodGet, "/api/transcription/status", nil, http.StatusOK)
 	var status TranscriptionStatus
-	if err := json.Unmarshal(body, &status); err != nil || !status.Ready || !strings.Contains(status.Engine, "whisper.cpp") || status.Model == "" || status.Language != "ko" {
+	if err := json.Unmarshal(body, &status); err != nil || !status.Ready || !strings.Contains(status.Engine, "whisper.cpp") || status.Model == "" || status.Language != "en" {
 		t.Fatalf("real local engine status: %+v err=%v body=%s", status, err, body)
 	}
 	if strings.Contains(string(body), transcriber.config.ModelPath) || strings.Contains(string(body), transcriber.config.BinaryPath) {
@@ -89,12 +89,12 @@ func TestApplicationRealTranscriptionRecovery(t *testing.T) {
 	const sceneID = "scene-asr"
 	const targetID = "target-button"
 	session := map[string]any{
-		"id": sessionID, "title": "실제 로컬 음성 전사 통합 검증",
+		"id": sessionID, "title": "Real local transcription integration check",
 		"scenes": []any{map[string]any{"id": sceneID, "width": 640, "height": 480,
 			"annotations": []any{map[string]any{"id": targetID, "x": 0.5, "y": 0.25}}}},
 		"transcript": []any{}, "prompt": "",
 	}
-	input, err := json.Marshal(map[string]any{"revision": 0, "session": session, "draft": map[string]any{"noteDraft": "복원할 초안"}})
+	input, err := json.Marshal(map[string]any{"revision": 0, "session": session, "draft": map[string]any{"noteDraft": "Draft to restore"}})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -141,7 +141,7 @@ func TestApplicationRealTranscriptionRecovery(t *testing.T) {
 		t.Helper()
 		body, _ := request(http.MethodGet, path, nil, http.StatusOK)
 		var loaded SessionSnapshot
-		if err := json.Unmarshal(body, &loaded); err != nil || loaded.Revision != 1 || len(loaded.Audio) != 1 || loaded.Audio[0].ID != audio.ID || loaded.Audio[0].TranscriptionStatus != "complete" || !bytes.Equal(loaded.Audio[0].Transcription, segmentsJSON) || string(loaded.Audio[0].Contexts) != contexts || !bytes.Contains(loaded.Draft, []byte("복원할 초안")) {
+		if err := json.Unmarshal(body, &loaded); err != nil || loaded.Revision != 1 || len(loaded.Audio) != 1 || loaded.Audio[0].ID != audio.ID || loaded.Audio[0].TranscriptionStatus != "complete" || !bytes.Equal(loaded.Audio[0].Transcription, segmentsJSON) || string(loaded.Audio[0].Contexts) != contexts || !bytes.Contains(loaded.Draft, []byte("Draft to restore")) {
 			t.Fatalf("session recovery lost actual ASR/context/draft: %+v err=%v", loaded, err)
 		}
 	}

@@ -48,21 +48,21 @@ func NewOpenAITranscriber(config OpenAITranscriberConfig) *OpenAITranscriber {
 		s.model = openAITranscriptionModel
 	}
 	if s.language == "" {
-		s.language = "ko"
+		s.language = "en"
 	}
 	if s.endpoint == "" {
 		s.endpoint = openAITranscriptionEndpoint
 	}
 	if !validTranscriptionModel(s.model) {
-		s.err = errors.New("설정에서 지원되는 OpenAI 전사 모델을 선택해 주세요.")
+		s.err = errors.New("Choose a supported OpenAI transcription model in Settings.")
 	}
 	endpoint, err := url.Parse(s.endpoint)
 	if err != nil || endpoint.User != nil || endpoint.RawQuery != "" || endpoint.Fragment != "" || (endpoint.Scheme != "https" && endpoint.Scheme != "http") || endpoint.Host == "" {
-		s.err = errors.New("음성 전사 API 주소 설정이 올바르지 않습니다.")
+		s.err = errors.New("The transcription API URL setting is invalid.")
 	} else if s.endpoint != openAITranscriptionEndpoint {
 		ip := net.ParseIP(endpoint.Hostname())
 		if endpoint.Hostname() != "localhost" && (ip == nil || !ip.IsLoopback()) {
-			s.err = errors.New("음성 전사는 공식 OpenAI API 주소만 사용할 수 있습니다.")
+			s.err = errors.New("Transcription can only use the official OpenAI API URL.")
 		}
 	}
 	client := http.Client{}
@@ -84,7 +84,7 @@ func (s *OpenAITranscriber) Status() TranscriptionStatus {
 	if s.err != nil {
 		status.Error = s.err.Error()
 	} else if s.key == "" || strings.ContainsAny(s.key, "\r\n") {
-		status.Error = "설정에서 OpenAI API 키를 입력해 주세요."
+		status.Error = "Enter your OpenAI API key in Settings."
 	} else {
 		status.Ready = true
 	}
@@ -105,7 +105,7 @@ func (s *OpenAITranscriber) Transcribe(parent context.Context, wavPath string) (
 	defer cancel()
 	durationMs, audible, err := validateTranscriptionWAV(wavPath)
 	if err != nil {
-		return nil, &TranscriptionError{Kind: "invalid_audio", Err: errors.New("16 kHz 모노 PCM16 WAV 음성 파일을 확인해 주세요.")}
+		return nil, &TranscriptionError{Kind: "invalid_audio", Err: errors.New("Check that the audio is a 16 kHz mono PCM16 WAV file.")}
 	}
 	if !audible {
 		return []TranscriptSegment{}, nil
@@ -114,11 +114,11 @@ func (s *OpenAITranscriber) Transcribe(parent context.Context, wavPath string) (
 	case s.gate <- struct{}{}:
 		defer func() { <-s.gate }()
 	default:
-		return nil, &TranscriptionError{Kind: "busy", Err: errors.New("음성을 전사 중입니다. 완료 후 다시 시도해 주세요.")}
+		return nil, &TranscriptionError{Kind: "busy", Err: errors.New("Transcription is in progress. Please try again when it finishes.")}
 	}
 	file, err := os.Open(wavPath)
 	if err != nil {
-		return nil, &TranscriptionError{Kind: "invalid_audio", Err: errors.New("저장된 음성 파일을 열 수 없습니다.")}
+		return nil, &TranscriptionError{Kind: "invalid_audio", Err: errors.New("Couldn't open the saved audio file.")}
 	}
 	defer file.Close()
 	var body bytes.Buffer
@@ -131,23 +131,23 @@ func (s *OpenAITranscriber) Transcribe(parent context.Context, wavPath string) (
 	}
 	for _, field := range fields {
 		if err := writer.WriteField(field[0], field[1]); err != nil {
-			return nil, &TranscriptionError{Kind: "failed", Err: errors.New("음성 전사 요청을 준비하지 못했습니다.")}
+			return nil, &TranscriptionError{Kind: "failed", Err: errors.New("Couldn't prepare the transcription request.")}
 		}
 	}
 	part, err := writer.CreateFormFile("file", "recording.wav")
 	if err != nil {
-		return nil, &TranscriptionError{Kind: "failed", Err: errors.New("음성 전사 파일을 준비하지 못했습니다.")}
+		return nil, &TranscriptionError{Kind: "failed", Err: errors.New("Couldn't prepare the audio file for transcription.")}
 	}
 	written, err := io.Copy(part, io.LimitReader(file, openAITranscriptionUploadLimit+1))
 	if err != nil || written > openAITranscriptionUploadLimit {
-		return nil, &TranscriptionError{Kind: "invalid_audio", Err: errors.New("음성 파일을 읽을 수 없거나 25 MB 제한을 초과했습니다.")}
+		return nil, &TranscriptionError{Kind: "invalid_audio", Err: errors.New("The audio file couldn't be read or exceeds the 25 MB limit.")}
 	}
 	if err := writer.Close(); err != nil {
-		return nil, &TranscriptionError{Kind: "failed", Err: errors.New("음성 전사 요청을 마무리하지 못했습니다.")}
+		return nil, &TranscriptionError{Kind: "failed", Err: errors.New("Couldn't finalize the transcription request.")}
 	}
 	request, err := http.NewRequestWithContext(ctx, http.MethodPost, s.endpoint, &body)
 	if err != nil {
-		return nil, &TranscriptionError{Kind: "failed", Err: errors.New("음성 전사 요청을 만들지 못했습니다.")}
+		return nil, &TranscriptionError{Kind: "failed", Err: errors.New("Couldn't create the transcription request.")}
 	}
 	request.Header.Set("Authorization", "Bearer "+s.key)
 	request.Header.Set("Content-Type", writer.FormDataContentType())
@@ -165,7 +165,7 @@ func (s *OpenAITranscriber) Transcribe(parent context.Context, wavPath string) (
 		return nil, openAITranscriptionRequestError(ctx, err)
 	}
 	if len(data) > openAITranscriptionResponseLimit {
-		return nil, &TranscriptionError{Kind: "invalid_response", Err: errors.New("음성 전사 결과가 허용 크기를 초과했습니다.")}
+		return nil, &TranscriptionError{Kind: "invalid_response", Err: errors.New("The transcription result exceeds the allowed size.")}
 	}
 	if err := ctx.Err(); err != nil {
 		return nil, &TranscriptionError{Kind: "canceled", Err: err}
@@ -183,7 +183,7 @@ func parseOpenAITextTranscription(data []byte, durationMs int64) ([]TranscriptSe
 		Text *string `json:"text"`
 	}
 	if durationMs <= 0 || json.Unmarshal(data, &result) != nil || result.Text == nil {
-		return nil, &TranscriptionError{Kind: "invalid_response", Err: errors.New("OpenAI 전사 결과를 읽지 못했습니다.")}
+		return nil, &TranscriptionError{Kind: "invalid_response", Err: errors.New("Couldn't read the OpenAI transcription result.")}
 	}
 	text := strings.TrimSpace(*result.Text)
 	if text == "" {
@@ -202,29 +202,29 @@ func openAITranscriptionRequestError(ctx context.Context, err error) error {
 	}
 	// Never expose transport URLs, headers, raw provider responses, or secrets
 	// embedded in errors returned by a transport or redirect callback.
-	return &TranscriptionError{Kind: "unavailable", Err: errors.New("OpenAI 음성 전사 API에 연결하지 못했습니다.")}
+	return &TranscriptionError{Kind: "unavailable", Err: errors.New("Couldn't connect to the OpenAI transcription API.")}
 }
 
 func openAITranscriptionHTTPError(status int) error {
-	kind, message := "failed", "OpenAI 음성 전사를 완료하지 못했습니다. 원음은 보관되어 있습니다."
+	kind, message := "failed", "OpenAI transcription didn't complete. The original audio has been kept."
 	switch {
 	case status == http.StatusUnauthorized || status == http.StatusForbidden:
-		kind, message = "unauthorized", "OpenAI API 키와 음성 전사 이용 권한을 확인해 주세요."
+		kind, message = "unauthorized", "Check your OpenAI API key and its access to transcription."
 	case status == http.StatusTooManyRequests:
-		kind, message = "rate_limited", "OpenAI API 사용 한도 또는 결제 상태를 확인한 뒤 다시 시도해 주세요."
+		kind, message = "rate_limited", "Check your OpenAI API usage limits or billing status, then try again."
 	case status == http.StatusRequestEntityTooLarge:
-		kind, message = "invalid_audio", "음성 파일이 OpenAI 전사 업로드 제한을 초과했습니다."
+		kind, message = "invalid_audio", "The audio file exceeds the OpenAI transcription upload limit."
 	case status == http.StatusBadRequest || status == http.StatusUnprocessableEntity:
-		kind, message = "invalid_request", "OpenAI가 음성 전사 요청을 처리하지 못했습니다. 녹음 형식을 확인해 주세요."
+		kind, message = "invalid_request", "OpenAI couldn't process the transcription request. Check the recording format."
 	case status == http.StatusNotFound || status >= 500 || (status >= 300 && status < 400):
-		kind, message = "unavailable", "OpenAI 음성 전사 API를 사용할 수 없습니다. 잠시 후 다시 시도해 주세요."
+		kind, message = "unavailable", "The OpenAI transcription API is unavailable. Please try again shortly."
 	}
 	return &TranscriptionError{Kind: kind, Err: errors.New(message)}
 }
 
 func parseOpenAITranscription(data []byte, durationMs int64) ([]TranscriptSegment, error) {
 	invalid := func(reason string) ([]TranscriptSegment, error) {
-		return nil, &TranscriptionError{Kind: "invalid_response", Err: errors.New("OpenAI 전사 결과의 발화 구간 시각을 확인하지 못했습니다. " + openAITranscriptionNumericDiagnostic(data, durationMs, reason))}
+		return nil, &TranscriptionError{Kind: "invalid_response", Err: errors.New("Couldn't verify the segment timestamps in the OpenAI transcription result. " + openAITranscriptionNumericDiagnostic(data, durationMs, reason))}
 	}
 	var result struct {
 		Text     string `json:"text"`

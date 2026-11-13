@@ -25,16 +25,16 @@ func chooseCaptureSource() (CaptureSource, error) {
 	value := C.cuevia_choose_source(&status)
 	if value == nil {
 		kind := CaptureUnavailable
-		message := "화면 선택 창을 열지 못했어요"
+		message := "Couldn't open the screen picker"
 		if status == 1 {
-			kind, message = CaptureCanceled, "화면 선택을 취소했어요"
+			kind, message = CaptureCanceled, "Screen selection canceled"
 		}
 		return CaptureSource{}, &CaptureError{Kind: kind, Err: errors.New(message)}
 	}
 	defer C.free(unsafe.Pointer(value))
 	var source CaptureSource
 	if err := json.Unmarshal([]byte(C.GoString(value)), &source); err != nil || source.ID == "" || (source.Kind != "monitor" && source.Kind != "program") {
-		return CaptureSource{}, &CaptureError{Kind: CaptureFailed, Err: errors.New("선택한 화면 정보를 읽지 못했어요")}
+		return CaptureSource{}, &CaptureError{Kind: CaptureFailed, Err: errors.New("Couldn't read the selected screen")}
 	}
 	return source, nil
 }
